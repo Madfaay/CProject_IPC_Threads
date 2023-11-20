@@ -75,18 +75,16 @@ static void parseArgs(int argc, char * argv[], Data *data)
     int fdOut = strtol(argv[3], NULL, 10);
     close(fdOut) ;
     int fdToMaster = strtol(argv[4], NULL, 10);
-    printf("on est a worker on regarde les params recus %f , %d , %d , %d \n " , elt , fdIn , fdOut , fdToMaster) ;
    // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
     int reponse = 1000 ;
     int write_res = write(fdToMaster , &reponse , sizeof(int)) ;
-    printf("on est la 76 ou pas \n") ;
     myassert(write_res !=-1 , "") ;
     data->elt = elt ;
     data->fdIn = fdIn ;
     data->fdOut = fdOut ;
     data->fdToMaster = fdToMaster ;
     data->cardinality+=1 ;
-   
+
     
     
  
@@ -101,7 +99,7 @@ static void parseArgs(int argc, char * argv[], Data *data)
  ************************************************************************/
 void stopAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(),  data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
     //TODO
@@ -220,7 +218,7 @@ static void sumAction(Data *data)
  ************************************************************************/
 static void insertAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
     //TODO
@@ -257,11 +255,12 @@ static void insertAction(Data *data)
     				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdFilsD_To_Parent[1]);
 				
-			        printf("%f + %d + %d + %d  on est a worker pour creer un fils.....\n" , elt , data->fdsD[0] , data->fdsD[1] , data->fdFilsD_To_Parent[1]) ;
+
     			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
-
+					data->fd = true ;
+					   TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
 					execv(path , argv) ;
 	
 
@@ -270,6 +269,19 @@ static void insertAction(Data *data)
 			
 
 					}
+					
+					
+		  		else
+		  		
+		  		{
+		  					int order = data->order ;
+		  					write(data->fdsD[1] , &order , sizeof(int)) ;
+		  					write(data->fdsD[1] , &elt , sizeof(int)) ;
+		  				
+		  		
+		  		}
+					
+					
 							}
 			else if(elt <= data->elt)
 			{
@@ -289,10 +301,11 @@ static void insertAction(Data *data)
     				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdFilsG_To_Parent[1]);
 				
-			        printf("%f + %d + %d + %d  on est a worker pour creer un fils.....\n" , elt , data->fdsG[0] , data->fdsG[1] , data->fdFilsG_To_Parent[1]) ;
+
     			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
+					data->fg = true ;
 
 					execv(path , argv) ;
 	
@@ -301,6 +314,15 @@ static void insertAction(Data *data)
 					
 			
 
+					}
+					
+					else
+					{
+					
+						int order = data->order ;
+		  					write(data->fdsG[1] , &order , sizeof(int)) ;
+		  					write(data->fdsG[1] , &elt , sizeof(int)) ;
+					
 					}
 			
 			}
@@ -399,7 +421,7 @@ void loop(Data *data)
             break;
         }
 
-        TRACE3("    [worker (%d, %d) {%g}] : fin ordre\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+        TRACE3("    [worker (%d, %d) {%g}] : fin ordre\n", getpid(), getppid(), data->elt/*TODO élément*/);
     }
 }
 
@@ -412,7 +434,7 @@ int main(int argc, char * argv[])
 {
     Data data;
     parseArgs(argc, argv, &data);
-    TRACE3("    [worker (%d, %d) {%g}] : début worker\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    //TRACE3("    [worker (%d, %d) {%g}] : début worker\n", getpid(), getppid(), 3.14 /*TODO élément*/);
 
     //TODO envoyer au master l'accusé de réception d'insertion (cf. master_worker.h)
     //TODO note : en effet si je suis créé c'est qu'on vient d'insérer un élément : moi
@@ -439,10 +461,11 @@ data.fdFilsG_To_Parent[1] = fdFilsG_To_Parent[1];
 
 data.fdFilsD_To_Parent[0] = fdFilsD_To_Parent[0];
 data.fdFilsD_To_Parent[1] = fdFilsD_To_Parent[1];
+
     loop(&data);
 
     //TODO fermer les tubes
 
-    TRACE3("    [worker (%d, %d) {%g}] : fin worker\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    //TRACE3("    [worker (actuelpid : %d, perepid :%d) {%f}] : fin worker\n", getpid(), getppid(), data.elt /*TODO élément*/);
     return EXIT_SUCCESS;
 }

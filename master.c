@@ -223,7 +223,7 @@ void orderInsert(Data *data)
 				
 				
 				
-			        printf("%f + %d + %d + %d  on est a mster proc fils chiffres.....\n" , data->elt , data->fds[0] , data->fds[1] , data->fdWorker_To_Master[1]) ;
+
     			    printf("%s + %s + %s + %s on est a master proc fils string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
