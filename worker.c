@@ -35,8 +35,8 @@ typedef struct
     int fdsD[2] ;
     int fdFilsG_To_Parent[2] ;
     int fdFilsD_To_Parent[2] ;
-    float fg;
-    float fd ;
+    bool fg;
+    bool fd ;
    
 
 } Data;
@@ -242,7 +242,7 @@ static void insertAction(Data *data)
 		if(elt >=data->elt )
 	{
 			
-			if(data->fd == 0)
+			if(data->fd == false)
 			{
 			
 			
@@ -254,10 +254,10 @@ static void insertAction(Data *data)
 	
 					sprintf(stringfds1, "%d", data->fdsD[0]);
    					sprintf(stringfds2, "%d", data->fdsD[1]);
-    				sprintf(stringElement, "%f", data->elt);
+    				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdFilsD_To_Parent[1]);
 				
-			        printf("%f + %d + %d + %d  on est a worker pour creer un fils.....\n" , data->elt , data->fdsD[0] , data->fdsD[1] , data->fdFilsD_To_Parent[1]) ;
+			        printf("%f + %d + %d + %d  on est a worker pour creer un fils.....\n" , elt , data->fdsD[0] , data->fdsD[1] , data->fdFilsD_To_Parent[1]) ;
     			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
@@ -266,9 +266,44 @@ static void insertAction(Data *data)
 	
 
 					}
+					
+			
 
 					}
 							}
+			else if(elt <= data->elt)
+			{
+			
+						if(data->fg== false)
+			{
+			
+			
+		int res = fork() ;
+
+				if(res ==0) 
+			
+				{
+	
+					sprintf(stringfds1, "%d", data->fdsG[0]);
+   					sprintf(stringfds2, "%d", data->fdsG[1]);
+    				sprintf(stringElement, "%f", elt);
+    				sprintf(fdWorker, "%d", data->fdFilsG_To_Parent[1]);
+				
+			        printf("%f + %d + %d + %d  on est a worker pour creer un fils.....\n" , elt , data->fdsG[0] , data->fdsG[1] , data->fdFilsG_To_Parent[1]) ;
+    			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
+					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
+					char *path = "./worker" ;
+
+					execv(path , argv) ;
+	
+
+					}
+					
+			
+
+					}
+			
+			}
 
 }
 		
