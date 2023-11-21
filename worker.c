@@ -76,9 +76,9 @@ static void parseArgs(int argc, char * argv[], Data *data)
     close(fdOut) ;
     int fdToMaster = strtol(argv[4], NULL, 10);
    // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
-    int reponse = 1000 ;
-    int write_res = write(fdToMaster , &reponse , sizeof(int)) ;
-    myassert(write_res !=-1 , "") ;
+    //int reponse = 1000 ;
+    //int write_res = write(fdToMaster , &reponse , sizeof(int)) ;
+   // myassert(write_res !=-1 , "") ;
     data->elt = elt ;
     data->fdIn = fdIn ;
     data->fdOut = fdOut ;
@@ -267,7 +267,7 @@ static void insertAction(Data *data)
 					sprintf(stringfds1, "%d", data->fdsD[0]);
    					sprintf(stringfds2, "%d", data->fdsD[1]);
     				sprintf(stringElement, "%f", elt);
-    				sprintf(fdWorker, "%d", data->fdFilsD_To_Parent[1]);
+    				sprintf(fdWorker, "%d", data->fdToMaster);
 				
 
     			    printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
@@ -313,7 +313,7 @@ static void insertAction(Data *data)
 					sprintf(stringfds1, "%d", data->fdsG[0]);
    					sprintf(stringfds2, "%d", data->fdsG[1]);
     				sprintf(stringElement, "%f", elt);
-    				sprintf(fdWorker, "%d", data->fdFilsG_To_Parent[1]);
+    				sprintf(fdWorker, "%d", data->fdToMaster);
 				
 
     			    printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;

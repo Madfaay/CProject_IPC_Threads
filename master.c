@@ -261,20 +261,20 @@ void orderInsert(Data *data)
 				
 				}
 			
-			int res_creating ;
-			int res_work = read(data->fdWorker_To_Master[0] , &res_creating , sizeof(int)) ;
-			myassert(res_work != -1 , "") ;
-			if (res_creating==1000)
-				{
-				printf("premier worker est cree avec success \n") ;
+			//int res_creating ;
+			//int res_work = read(data->fdWorker_To_Master[0] , &res_creating , sizeof(int)) ;
+			//myassert(res_work != -1 , "") ;
+			//if (res_creating==1000)
+			//	{
+			//	printf("premier worker est cree avec success \n") ;
 
-				}
+			//	}
 				
-			else
-			{
-					printf("le premier worker n'est pas creer\n") ;
+		//	else
+		//	{
+				//	printf("le premier worker n'est pas creer\n") ;
 
-			}
+			//}
 
 }
 
