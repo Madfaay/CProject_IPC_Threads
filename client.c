@@ -267,6 +267,13 @@ void sendData(const Data *data)
     	myassert(write_res != -1 , " ") ;
     }
     
+    else
+    {
+    		    int order = data->order ;
+        		int write_res = write(data->openRes , &(order), sizeof(int)) ;
+    			myassert(write_res != -1 , " ") ;
+    }
+    
     // - envoi de l'ordre au master (cf. CM_ORDER_* dans client_master.h)
     // - envoi des paramètres supplémentaires au master (pour CM_ORDER_EXIST,
     //   CM_ORDER_INSERT et CM_ORDER_INSERT_MANY)
@@ -277,16 +284,23 @@ void sendData(const Data *data)
 void receiveAnswer(const Data *data)
 {
     myassert(data != NULL, "pb !");   //TODO à enlever (présent pour éviter le warning)
-        int accuse ;
-    if(data->order ==CM_ORDER_INSERT)
+    if(data->order == CM_ANSWER_INSERT_OK)
     {
-
+    int accuse ;
  	int read_res = read(data->openRes , &accuse , sizeof(int) );
 	myassert(read_res != -1 , " ") ;
-
+		printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
 	}
+	if(data->order == MW_ORDER_MAXIMUM)
+	{
+	float rep ;
+	int read_res = read(data->openRes , &rep , sizeof(float) );
+			printf("j'ai bien recu la reponse le max est : %f \n" , rep) ;
+	myassert(read_res != -1 , " ") ;
+	}
+
 	
-	printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
+
     
 
     //TODO
@@ -303,8 +317,10 @@ void receiveAnswer(const Data *data)
  ************************************************************************/
 int main(int argc, char * argv[])
 {
+
     Data data;
     parseArgs(argc, argv, &data);
+
 
     if (data.order == CM_ORDER_LOCAL)
         lauchThreads(&data);
@@ -317,18 +333,20 @@ int main(int argc, char * argv[])
         // - ouvrir les tubes nommés (ils sont déjà créés par le master)
         int open_CTM = open(FD_CTOM , O_WRONLY) ;
         myassert(open_CTM != -1 , " ") ;
-        Data d ;
-        d.order = CM_ORDER_INSERT  ;
-        d.openRes = open_CTM ;
-        d.elt = strtof(argv[2], NULL);
-        sendData(&d) ;
+
+        data.openRes = open_CTM ;
+		if(data.order == CM_ORDER_INSERT)
+		{
+        data.elt = strtof(argv[2], NULL);
+        }
+        sendData(&data) ;
         int close_res =close(open_CTM);
           myassert(open_CTM != -1 , " ") ;
 
         int open_MTC = open(FD_MTOC , O_RDONLY) ;
         myassert(open_MTC != -1 ," ") ;
-		d.openRes = open_MTC ;
-        receiveAnswer(&d) ;
+		data.openRes = open_MTC ;
+        receiveAnswer(&data) ;
         close_res = close(open_MTC) ;
        myassert(close_res != -1 , " ") ;
       

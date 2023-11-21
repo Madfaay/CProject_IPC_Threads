@@ -36,7 +36,7 @@ typedef struct
     int fdFilsG_To_Parent[2] ;
     int fdFilsD_To_Parent[2] ;
     bool fg;
-    bool fd ;
+    bool fd;
    
 
 } Data;
@@ -85,7 +85,7 @@ static void parseArgs(int argc, char * argv[], Data *data)
     data->fdToMaster = fdToMaster ;
     data->cardinality+=1 ;
 
-    
+
     
  
     
@@ -139,6 +139,7 @@ static void minimumAction(Data *data)
     TRACE3("    [worker (%d, %d) {%g}] : ordre minimum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
+	
     //TODO
     // - si le fils gauche n'existe pas (on est sur le minimum)
     //       . envoyer l'accusé de réception au master (cf. master_worker.h)
@@ -155,9 +156,22 @@ static void minimumAction(Data *data)
  ************************************************************************/
 static void maximumAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre maximum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre maximum\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
-
+    int write_res ;
+	if(data->fd==false)
+	{
+				printf("je suis la en worker2\n") ;
+				float res = data->elt ;
+				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
+				myassert(write_res != -1 , "" ) ;
+	
+	}
+	else
+	{
+		 write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
+		  myassert(write_res != -1 , "" ) ;
+	}
     //TODO
     // cf. explications pour le minimum
     //END TODO
@@ -243,37 +257,37 @@ static void insertAction(Data *data)
 			if(data->fd == false)
 			{
 			
-			
+	    data->fd = true ;
 		int res = fork() ;
 
 				if(res ==0) 
 			
 				{
-	
+					
 					sprintf(stringfds1, "%d", data->fdsD[0]);
    					sprintf(stringfds2, "%d", data->fdsD[1]);
     				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdFilsD_To_Parent[1]);
 				
 
-    			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
+    			    printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
-					data->fd = true ;
-					   TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
+					   //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
 					execv(path , argv) ;
 	
 
 					}
 					
-			
-
+		
+	
 					}
 					
 					
 		  		else
 		  		
 		  		{
+		  		   printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 		  					int order = data->order ;
 		  					write(data->fdsD[1] , &order , sizeof(int)) ;
 		  					write(data->fdsD[1] , &elt , sizeof(int)) ;
@@ -289,7 +303,7 @@ static void insertAction(Data *data)
 						if(data->fg== false)
 			{
 			
-			
+								data->fg = true ;
 		int res = fork() ;
 
 				if(res ==0) 
@@ -302,22 +316,28 @@ static void insertAction(Data *data)
     				sprintf(fdWorker, "%d", data->fdFilsG_To_Parent[1]);
 				
 
-    			    printf("%s + %s + %s + %s on est a worker pour creer un fils. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
+    			    printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
-					data->fg = true ;
+
 
 					execv(path , argv) ;
-	
+				
 
 					}
 					
+					
+				
 			
 
 					}
 					
 					else
 					{
+					
+					 
+					 
+					
 					
 						int order = data->order ;
 		  					write(data->fdsG[1] , &order , sizeof(int)) ;
@@ -433,7 +453,7 @@ void loop(Data *data)
 int main(int argc, char * argv[])
 {
     Data data;
-    parseArgs(argc, argv, &data);
+
     //TRACE3("    [worker (%d, %d) {%g}] : début worker\n", getpid(), getppid(), 3.14 /*TODO élément*/);
 
     //TODO envoyer au master l'accusé de réception d'insertion (cf. master_worker.h)
@@ -461,8 +481,10 @@ data.fdFilsG_To_Parent[1] = fdFilsG_To_Parent[1];
 
 data.fdFilsD_To_Parent[0] = fdFilsD_To_Parent[0];
 data.fdFilsD_To_Parent[1] = fdFilsD_To_Parent[1];
-
-    loop(&data);
+data.fd = false ;
+data.fg = false ;
+    parseArgs(argc, argv, &data);
+ loop(&data);
 
     //TODO fermer les tubes
 

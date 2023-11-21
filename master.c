@@ -27,6 +27,8 @@
 /************************************************************************
  * Données persistantes d'un master
  ************************************************************************/
+ 
+ static int compteur = 0 ;
 typedef struct
 {
 
@@ -133,7 +135,32 @@ void orderMaximum(Data *data)
 {
     TRACE0("[master] ordre maximum\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    if(compteur==0)
+    {
+    
+     printf("on est dans if de max \n") ;
+    int reponse = CM_ANSWER_MAXIMUM_EMPTY  ;
+	int write_res = write(data->openRes , &reponse  , sizeof(int) );
+	myassert(write_res != -1 , " ") ;
+    	
+    
+    }	
+    
+    else
+    
+    {
+    	int order = CM_ORDER_MAXIMUM ;
+		int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+		myassert(write_res != -1 ," ") ;
+		float rep ;
+		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
+			    myassert(read_res != -1 ," ") ;
+		printf("je print le reponse de max a master %f \n", rep) ;
+	     write_res = write(data->openRes , &rep  , sizeof(float) );
+		myassert(write_res != -1 , " ") ;
 
+    	
+    }
     //TODO
     // cf. explications pour le minimum
     //END TODO
@@ -188,12 +215,13 @@ void orderSum(Data *data)
  ************************************************************************/
 
 //TODO voir si une fonction annexe commune à orderInsert et orderInsertMany est justifiée
-static int compteur = 0 ;
+
 void orderInsert(Data *data)
 {
     TRACE0("[master] ordre insertion\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
     printf("j'ai recu l'ordre %d \n" , data->order ) ;
+
 	int reponse = CM_ANSWER_INSERT_OK ;
 	int write_res = write(data->openRes , &reponse  , sizeof(int) );
 		myassert(write_res != -1 , " ") ;
@@ -337,11 +365,9 @@ void loop(Data *data)
         int open_MTC = open(FD_MTOC , O_WRONLY) ;
                 myassert(open_MTC != -1 , " ") ;
      
-	
-         ;  //TODO pour que ça ne boucle pas, mais recevoir l'ordre du client
+
+         //TODO pour que ça ne boucle pas, mais recevoir l'ordre du client
         int order_recieve = read(open_CTM , &(data->order) , sizeof(int)) ;
-        myassert(order_recieve != -1 , " " ) ;
-        order_recieve = read(open_CTM , &(data->elt) , sizeof(float)) ;
         myassert(order_recieve != -1 , " " ) ;
         data->openRes = open_MTC ;
         switch(data->order)
@@ -366,6 +392,8 @@ void loop(Data *data)
             orderSum(data);
             break;
           case CM_ORDER_INSERT:
+          	 order_recieve = read(open_CTM , &(data->elt) , sizeof(float)) ;
+    		 myassert(order_recieve != -1 , " " ) ;
             orderInsert(data);
             break;
           case CM_ORDER_INSERT_MANY:
@@ -389,7 +417,7 @@ void loop(Data *data)
                 myassert(close_res != -1 ," ") ;
         //TODO attendre ordre du client avant de continuer (sémaphore pour une précédence)
 
-        TRACE0("[master] fin ordre\n");
+        //TRACE0("[master] fin ordre\n");
     }
 }
 
