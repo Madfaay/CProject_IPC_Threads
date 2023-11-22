@@ -37,6 +37,7 @@ typedef struct
     int fdFilsD_To_Parent[2] ;
     bool fg;
     bool fd;
+    float sumRes ;
    
 
 } Data;
@@ -73,7 +74,6 @@ static void parseArgs(int argc, char * argv[], Data *data)
     float elt = strtof(argv[1], NULL);
     int fdIn = strtol(argv[2], NULL, 10);
     int fdOut = strtol(argv[3], NULL, 10);
-    close(fdOut) ;
     int fdToMaster = strtol(argv[4], NULL, 10);
    // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
     //int reponse = 1000 ;
@@ -101,13 +101,26 @@ void stopAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(),  data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    if(compteur!=0)
-    {
-	int order = CM_ORDER_STOP ;
-	int write_res = write(data->fds[1] , &order , sizeof(int)) ;
-	myassert(write_res != -1 ," ") ;
-	}
+ 	int write_res ;
     //TODO
+    if(data->fd ==true)
+    {
+    	  write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
+		  myassert(write_res != -1 , "" ) ;
+
+    }
+    
+    if(data->fg ==true)
+    {
+    	  write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
+		  myassert(write_res != -1 , "" ) ;
+
+    }
+    
+      
+    
+    
+    
     // - traiter les cas où les fils n'existent pas
     // - envoyer au worker gauche ordre de fin (cf. master_worker.h)
     // - envoyer au worker droit ordre de fin (cf. master_worker.h)
@@ -230,8 +243,43 @@ static void existAction(Data *data)
  ************************************************************************/
 static void sumAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre sum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre sum\n", getpid(), getppid(),data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int write_res ;
+    int read_res ;
+    if(data->fd == true)
+    {
+    
+    write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
+		  myassert(write_res != -1 , "" ) ;
+		  float resd ;
+	read_res = read(data->fdFilsD_To_Parent[0] , &(resd) , sizeof(float)) ;
+			  myassert(read_res != -1 , "" ) ;
+			  printf("la reponse de mon fils d %f \n" ,resd) ;
+	data->sumRes+=resd;
+	
+    }
+    
+    if(data->fg==true)
+    {
+    	write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
+		myassert(write_res != -1 , "" ) ;
+		float resg ;
+		read_res = read(data->fdFilsG_To_Parent[0] , &(resg) , sizeof(float)) ;
+					  myassert(read_res != -1 , "" ) ;
+					  			  printf("la reponse de mon fils g %f \n" ,resg) ;
+		data->sumRes+=resg;
+    
+    }
+    
+   
+    	data->sumRes+=(data->elt)*data->cardinality;
+    				  printf("j'ai envoyey cette sum %f \n" ,data->sumRes) ;
+    	write_res = write(data->fdOut , &(data->sumRes) , sizeof(float)) ;
+    						  myassert(write_res != -1 , "" ) ;
+    
+
+       
 
     //TODO
     // - traiter les cas où les fils n'existent pas
@@ -283,7 +331,7 @@ static void insertAction(Data *data)
 				{
 					
 					sprintf(stringfds1, "%d", data->fdsD[0]);
-   					sprintf(stringfds2, "%d", data->fdsD[1]);
+   					sprintf(stringfds2, "%d", data->fdFilsD_To_Parent[1]);
     				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdToMaster);
 				
@@ -329,7 +377,7 @@ static void insertAction(Data *data)
 				{
 	
 					sprintf(stringfds1, "%d", data->fdsG[0]);
-   					sprintf(stringfds2, "%d", data->fdsG[1]);
+   					sprintf(stringfds2, "%d", data->fdFilsG_To_Parent[1]);
     				sprintf(stringElement, "%f", elt);
     				sprintf(fdWorker, "%d", data->fdToMaster);
 				
@@ -344,7 +392,7 @@ static void insertAction(Data *data)
 
 					}
 					
-					
+			
 				
 			
 
@@ -505,7 +553,9 @@ data.fg = false ;
  loop(&data);
 
     //TODO fermer les tubes
+    
+ 
 
-    //TRACE3("    [worker (actuelpid : %d, perepid :%d) {%f}] : fin worker\n", getpid(), getppid(), data.elt /*TODO élément*/);
+    TRACE3("    [worker (actuelpid : %d, perepid :%d) {%f}] : fin worker\n", getpid(), getppid(), data.elt /*TODO élément*/);
     return EXIT_SUCCESS;
 }

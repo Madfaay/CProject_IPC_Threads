@@ -34,7 +34,8 @@ typedef struct
 
    int openRes ;
    int accuse ;
-   int fds[2] ;
+   int fds_To_Master[2] ;
+   int fds_To_Worker[2] ;
    int fdWorker_To_Master[2];
     
     // infos pour le travail à faire (récupérées sur la ligne de commande)
@@ -78,12 +79,24 @@ void orderStop(Data *data)
 {
     TRACE0("[master] ordre stop\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    if(compteur!=0)
+    if(compteur==0)
     {
-	int order = CM_ORDER_STOP ;
-	int write_res = write(data->fds[1] , &order , sizeof(int)) ;
-	myassert(write_res != -1 ," ") ;
+      int reponse = CM_ANSWER_STOP_OK ;
+	  int write_res = write(data->openRes , &reponse  , sizeof(int) );
+	  myassert(write_res != -1 , " ") ;
+	  
+    }
+    
+    else
+    {
+		int order = CM_ORDER_STOP;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
+		myassert(write_res != -1 ," ") ;
+		wait(NULL) ;
+
 	}
+    
+  
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
     // - envoyer au premier worker ordre de fin (cf. master_worker.h)
@@ -133,7 +146,7 @@ void orderMinimum(Data *data)
     
     {
     	int order = CM_ORDER_MINIMUM;
-		int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
 		myassert(write_res != -1 ," ") ;
 		float rep ;
 		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
@@ -179,7 +192,7 @@ void orderMaximum(Data *data)
     
     {
     	int order = CM_ORDER_MAXIMUM ;
-		int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
 		myassert(write_res != -1 ," ") ;
 		float rep ;
 		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
@@ -230,6 +243,30 @@ void orderSum(Data *data)
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
     //TODO
+    if(compteur==0)
+    {
+    	float reponse = 0. ;
+		int write_res = write(data->openRes , &reponse  , sizeof(float) );
+		myassert(write_res != -1 , " ") ;
+    
+    }
+    else
+    {
+    	int order = CM_ORDER_SUM;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
+		myassert(write_res != -1 ," ") ;
+		float rep ;
+		printf("d'ici sa vient je pense avant le read \n") ;
+		int read_res = read(data->fds_To_Master[0] , &rep , sizeof(float)) ;
+			    myassert(read_res != -1 ," ") ;
+		printf("je print le reponse de sum a master %f \n", rep) ;
+	     write_res = write(data->openRes , &rep  , sizeof(float) );
+		myassert(write_res != -1 , " ") ;
+    
+    }
+    
+
+  
     // - traiter le cas ensemble vide (pas de premier worker) : la somme est alors 0
     // - envoyer au premier worker ordre sum (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
@@ -265,8 +302,8 @@ void orderInsert(Data *data)
 	    char stringfds2[50] ;
 		char stringElement[50] ;
 		char fdWorker[50] ;
-		sprintf(stringfds1, "%d", data->fds[0]);
-   		sprintf(stringfds2, "%d", data->fds[1]);
+		sprintf(stringfds1, "%d", data->fds_To_Worker[0]);
+   		sprintf(stringfds2, "%d", data->fds_To_Master[1]);
     	sprintf(stringElement, "%f", data->elt);
     	sprintf(fdWorker, "%d", data->fdWorker_To_Master[1]);
 		int res = fork() ;
@@ -313,9 +350,9 @@ else
 
 		int order = CM_ORDER_INSERT ;
 		float elt = data->elt ;
-		int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
 		myassert(write_res != -1 ," ") ;
-			write_res =write(data->fds[1] , &elt , sizeof(float)) ;
+			write_res =write(data->fds_To_Worker[1] , &elt , sizeof(float)) ;
 		myassert(write_res != -1 ," ") ;
 			
 
@@ -476,26 +513,31 @@ int main(int argc, char * argv[])
     assert(Client_To_Master !=-1) ;
     
     
-    
+ 
 
     //END TODO
- int fdWorker_To_Master[2];
-pipe(fdWorker_To_Master);
+int fdWorker_To_Master[2];
 
-int fds[2];
-pipe(fds);
+int fds_To_Master[2] ;
+int fds_To_Worker[2] ;  
+pipe(fds_To_Master);
+pipe(fdWorker_To_Master) ;
+pipe(fds_To_Worker) ;
 
 
-data.fds[0] = fds[0];
-data.fds[1] = fds[1];
+
+data.fds_To_Master[0] = fds_To_Master[0];
+data.fds_To_Master[1] = fds_To_Master[1];
+data.fds_To_Worker[0] = fds_To_Worker[0];
+data.fds_To_Worker[1] = fds_To_Worker[1];
 
 data.fdWorker_To_Master[0] = fdWorker_To_Master[0];
 data.fdWorker_To_Master[1] = fdWorker_To_Master[1];
     loop(&data);
 
 
-   unlink("FD_MTOC");
-   unlink("FD_CTOM");
+   unlink(FD_MTOC);
+   unlink(FD_CTOM);
 
     //TODO destruction des tubes nommés, des sémaphores, ...
 

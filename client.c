@@ -305,6 +305,17 @@ void receiveAnswer(const Data *data)
 			printf("j'ai bien recu la reponse le min est : %f \n" , rep) ;
 	myassert(read_res != -1 , " ") ;
 	}
+	
+	if(data->order == MW_ORDER_SUM)
+	{
+		float rep ;
+	int read_res = read(data->openRes , &rep , sizeof(float) );
+			printf("j'ai bien recu la reponse la somme est : %f \n" , rep) ;
+	myassert(read_res != -1 , " ") ;
+	
+	}
+	
+
 
 	
 
