@@ -78,7 +78,12 @@ void orderStop(Data *data)
 {
     TRACE0("[master] ordre stop\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-
+    if(compteur!=0)
+    {
+	int order = CM_ORDER_STOP ;
+	int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+	myassert(write_res != -1 ," ") ;
+	}
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
     // - envoyer au premier worker ordre de fin (cf. master_worker.h)
@@ -114,7 +119,31 @@ void orderMinimum(Data *data)
 {
     TRACE0("[master] ordre minimum\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
+ if(compteur==0)
+    {
+    
+    int reponse = CM_ANSWER_MINIMUM_EMPTY  ;
+	int write_res = write(data->openRes , &reponse  , sizeof(int) );
+	myassert(write_res != -1 , " ") ;
+    	
+    
+    }	
+    
+    else
+    
+    {
+    	int order = CM_ORDER_MINIMUM;
+		int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+		myassert(write_res != -1 ," ") ;
+		float rep ;
+		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
+			    myassert(read_res != -1 ," ") ;
+		printf("je print le reponse de min a master %f \n", rep) ;
+	     write_res = write(data->openRes , &rep  , sizeof(float) );
+		myassert(write_res != -1 , " ") ;
 
+    	
+    }
     //TODO
     // - si ensemble vide (pas de premier worker)
     //       . envoyer l'accusé de réception dédié au client (cf. client_master.h)
@@ -138,7 +167,7 @@ void orderMaximum(Data *data)
     if(compteur==0)
     {
     
-     printf("on est dans if de max \n") ;
+
     int reponse = CM_ANSWER_MAXIMUM_EMPTY  ;
 	int write_res = write(data->openRes , &reponse  , sizeof(int) );
 	myassert(write_res != -1 , " ") ;

@@ -101,7 +101,12 @@ void stopAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(),  data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
-
+    if(compteur!=0)
+    {
+	int order = CM_ORDER_STOP ;
+	int write_res = write(data->fds[1] , &order , sizeof(int)) ;
+	myassert(write_res != -1 ," ") ;
+	}
     //TODO
     // - traiter les cas où les fils n'existent pas
     // - envoyer au worker gauche ordre de fin (cf. master_worker.h)
@@ -138,7 +143,20 @@ static void minimumAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre minimum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
+  	int write_res ;
+	if(data->fg==false)
+	{
 
+				float res = data->elt ;
+				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
+				myassert(write_res != -1 , "" ) ;
+	
+	}
+	else
+	{
+		 write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
+		  myassert(write_res != -1 , "" ) ;
+	}
 	
     //TODO
     // - si le fils gauche n'existe pas (on est sur le minimum)
@@ -161,7 +179,7 @@ static void maximumAction(Data *data)
     int write_res ;
 	if(data->fd==false)
 	{
-				printf("je suis la en worker2\n") ;
+
 				float res = data->elt ;
 				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
 				myassert(write_res != -1 , "" ) ;
