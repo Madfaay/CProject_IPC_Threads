@@ -113,6 +113,34 @@ void orderHowMany(Data *data)
 {
     TRACE0("[master] ordre how many\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int write_res ;
+    int nb_elements = 0;
+    int nb_all_elements = 0 ;
+    if(compteur==0)
+    {
+		write_res = write(data->openRes , &nb_all_elements , sizeof(int)) ;
+		myassert(write_res!=0 , " ") ;
+		write_res = write(data->openRes , &nb_elements , sizeof(int)) ;
+		myassert(write_res!=0 , " ") ;
+
+	}
+	   else
+    {
+    	int order = CM_ORDER_HOW_MANY;
+		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
+		myassert(write_res != -1 ," ") ;
+		int read_res = read(data->fds_To_Master[0] , &nb_elements , sizeof(int)) ;
+			    myassert(read_res != -1 ," ") ;
+			read_res = read(data->fds_To_Master[0] , &nb_all_elements , sizeof(int)) ;
+			    myassert(read_res != -1 ," ") ;
+	     	write_res = write(data->openRes , &nb_all_elements , sizeof(int)) ;
+			myassert(write_res!=0 , " ") ;
+			write_res = write(data->openRes , &nb_elements , sizeof(int)) ;
+			myassert(write_res!=0 , " ") ;
+			printf("je print le resultat a master de how many nbdifferents : %d , nbtotal : %d \n " , nb_elements , nb_all_elements) ;
+			
+    
+    }
 
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
@@ -147,13 +175,13 @@ void orderMinimum(Data *data)
     {
     	int order = CM_ORDER_MINIMUM;
 		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
+		    myassert(write_res != -1 ," ") ;
 		float rep ;
 		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
-			    myassert(read_res != -1 ," ") ;
-		printf("je print le reponse de min a master %f \n", rep) ;
-	     write_res = write(data->openRes , &rep  , sizeof(float) );
-		myassert(write_res != -1 , " ") ;
+			myassert(read_res != -1 ," ") ;
+		    printf("je print le reponse de min a master %f \n", rep) ;
+	        write_res = write(data->openRes , &rep  , sizeof(float) );
+		    myassert(write_res != -1 , " ") ;
 
     	
     }
@@ -402,9 +430,19 @@ void orderPrint(Data *data)
 {
     TRACE0("[master] ordre affichage\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int write_res ;
+        	printf("on est la\n") ;
 
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
+    if(compteur==0)
+    {
+    	int rep = MW_ORDER_PRINT ;
+    	write_res = write(data->openRes , &rep , sizeof(int)) ;
+    	printf("on est la\n") ;
+    	myassert(write_res !=0 , " " ) ;
+    	
+    }
     // - envoyer au premier worker ordre print (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
     //   note : ce sont les workers qui font les affichages

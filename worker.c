@@ -136,6 +136,45 @@ static void howManyAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre how many\n", getpid(), getppid(), 3.14 /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int write_res ;
+    int read_res ;
+    int nb_elements = 0;
+    int nb_all_elements = 0 ;
+    if(data->fd == true)
+    {
+    
+    write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
+	myassert(write_res != -1 , "" ) ;
+	read_res = read(data->fdFilsD_To_Parent[0] , &nb_elements , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	read_res = read(data->fdFilsD_To_Parent[0] , &nb_all_elements , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	
+    }
+    
+    
+    if(data->fg == true)
+    {
+    
+    write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
+	myassert(write_res != -1 , "" ) ;
+  
+	read_res = read(data->fdFilsG_To_Parent[0] , &nb_elements , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	read_res = read(data->fdFilsG_To_Parent[0] , &nb_all_elements , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	
+    }
+    
+    nb_elements ++ ;
+    nb_all_elements+= data->cardinality ;
+    printf("le nb d'elements (%d , %d) \n " , nb_elements , nb_all_elements) ;
+    
+    write_res = write(data->fdOut , &nb_elements , sizeof(int)) ;
+    write_res = write(data->fdOut , &nb_all_elements , sizeof(int)) ;
+    
+    
+    
 
     //TODO
     // - traiter les cas où les fils n'existent pas

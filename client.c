@@ -284,24 +284,26 @@ void sendData(const Data *data)
 void receiveAnswer(const Data *data)
 {
     myassert(data != NULL, "pb !");   //TODO à enlever (présent pour éviter le warning)
+    int read_res ;
+    int accuse ;
     if(data->order == CM_ANSWER_INSERT_OK)
     {
-    int accuse ;
- 	int read_res = read(data->openRes , &accuse , sizeof(int) );
+
+ 	 read_res = read(data->openRes , &accuse , sizeof(int) );
 	myassert(read_res != -1 , " ") ;
 		printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
 	}
 	if(data->order == MW_ORDER_MAXIMUM)
 	{
 	float rep ;
-	int read_res = read(data->openRes , &rep , sizeof(float) );
+	read_res = read(data->openRes , &rep , sizeof(float) );
 			printf("j'ai bien recu la reponse le max est : %f \n" , rep) ;
 	myassert(read_res != -1 , " ") ;
 	}
 	if(data->order == MW_ORDER_MINIMUM)
 	{
 	float rep ;
-	int read_res = read(data->openRes , &rep , sizeof(float) );
+	read_res = read(data->openRes , &rep , sizeof(float) );
 			printf("j'ai bien recu la reponse le min est : %f \n" , rep) ;
 	myassert(read_res != -1 , " ") ;
 	}
@@ -309,9 +311,31 @@ void receiveAnswer(const Data *data)
 	if(data->order == MW_ORDER_SUM)
 	{
 		float rep ;
-	int read_res = read(data->openRes , &rep , sizeof(float) );
+	read_res = read(data->openRes , &rep , sizeof(float) );
 			printf("j'ai bien recu la reponse la somme est : %f \n" , rep) ;
 	myassert(read_res != -1 , " ") ;
+	
+	}
+	
+	if(data->order ==CM_ORDER_HOW_MANY)
+	{
+		int nb_elements ;
+		int nb_all_elements ;
+			
+			read_res = read(data->openRes , &nb_elements , sizeof(float) );
+			myassert(read_res != 0 , " ") ;
+			read_res = read(data->openRes , &nb_all_elements , sizeof(float) );
+			myassert(read_res != 0 , " ") ;
+			printf("les nb d'elements differents : %d , nb total d'elements %d\n" , nb_all_elements, nb_elements) ;
+			
+	}
+	
+	if(data->order ==MW_ORDER_PRINT)
+	{
+		printf("on est la \n" ) ;
+		read_res = read(data->openRes , &accuse , sizeof(int)) ;
+		myassert(accuse!=0 , " ") ;
+		printf("j'ai recu l'accuse %d \n " , accuse) ;
 	
 	}
 	
@@ -366,7 +390,7 @@ int main(int argc, char * argv[])
 		data.openRes = open_MTC ;
         receiveAnswer(&data) ;
         close_res = close(open_MTC) ;
-       myassert(close_res != -1 , " ") ;
+        myassert(close_res != -1 , " ") ;
       
                 printf("fin client\n") ;
         //       . les ouvertures sont bloquantes, il faut s'assurer que
