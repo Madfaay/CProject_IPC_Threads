@@ -18,7 +18,8 @@
 
 
 
-
+#include <sys/ipc.h>
+#include <sys/sem.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -37,6 +38,7 @@ typedef struct
    int fds_To_Master[2] ;
    int fds_To_Worker[2] ;
    int fdWorker_To_Master[2];
+   int precedence ;
     
     // infos pour le travail à faire (récupérées sur la ligne de commande)
     int order;     // ordre de l'utilisateur (cf. CM_ORDER_* dans client_master.h)
@@ -303,6 +305,33 @@ void orderSum(Data *data)
     // - envoyer le résultat au client
     //END TODO
 }
+ int my_semget(int nbreTokens , char * kEY ,int projectID)
+{
+    key_t key;
+    int semId;
+    int ret;
+
+    key = ftok(kEY, projectID);
+    assert(key != -1);
+    semId = semget(key, 1, IPC_CREAT | IPC_EXCL | 0641);
+    myassert(semId != -1 , " ");
+
+    ret = semctl(semId, 0, SETVAL, nbreTokens);
+    myassert(ret != -1 , " ");
+    
+
+    return semId;
+}
+
+//-----------------------------------------------------------------
+static void my_destroy(int semId)
+{
+    int ret;
+    
+    ret = semctl(semId, -1, IPC_RMID);
+    myassert(ret != -1 , " ");
+}
+
 
 /************************************************************************
  * insertion d'un élément
@@ -465,6 +494,12 @@ void orderPrint(Data *data)
     //END TODO
 }
 
+static void entrerSC(int semId)
+{
+    struct sembuf operation = {0, -1, 0};
+    int ret = semop(semId, &operation, 1);
+    assert(ret != -1);
+}
 
 /************************************************************************
  * boucle principale de communication avec le client
@@ -478,7 +513,9 @@ void loop(Data *data)
     while (! end)
     {
         //TODO ouverture des tubes avec le client (cf. explications dans client.c)
-        printf("on est dans la boucle'n") ;
+        printf("on est dans la boucle\n") ;
+
+
         int open_CTM = open(FD_CTOM , O_RDONLY) ;
                 myassert(open_CTM != -1 , " ") ;
         int open_MTC = open(FD_MTOC , O_WRONLY) ;
@@ -534,7 +571,9 @@ void loop(Data *data)
         myassert(close_res != -1 ," ") ;
         close_res =close(open_CTM) ;
                 myassert(close_res != -1 ," ") ;
+
         //TODO attendre ordre du client avant de continuer (sémaphore pour une précédence)
+        entrerSC(data->precedence) ;
 
         //TRACE0("[master] fin ordre\n");
     }
@@ -560,6 +599,9 @@ int main(int argc, char * argv[])
     //TODO
     // - création des sémaphores
     // - création des tubes nommés
+    int mutexid = my_semget(1 , MUTEX , PROJID) ;
+    int secondMutex = my_semget(1 , MONFICHIER , PROJID2) ;
+    data.precedence = secondMutex ;
     int Master_To_Client = mkfifo(FD_MTOC , 0644) ;
     assert(Master_To_Client !=-1) ;
     int Client_To_Master = mkfifo(FD_CTOM , 0644) ;
@@ -591,6 +633,9 @@ data.fdWorker_To_Master[1] = fdWorker_To_Master[1];
 
    unlink(FD_MTOC);
    unlink(FD_CTOM);
+   my_destroy(mutexid) ;
+   my_destroy(data.precedence) ;
+
 
     //TODO destruction des tubes nommés, des sémaphores, ...
 

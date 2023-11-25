@@ -18,6 +18,8 @@
 #include "string.h"  
 
 
+#include <sys/ipc.h>
+#include <sys/sem.h>
 
 #include <assert.h>
 #include <sys/stat.h>
@@ -186,6 +188,33 @@ static void parseArgs(int argc, char * argv[], Data *data)
         if (data->max <= data->min)
             usage(argv[0], TK_LOCAL " : max ne doit être strictement supérieur à min");
     }
+}
+
+static void entrerSC(int semId)
+{
+    struct sembuf operation = {0, -1, 0};
+    int ret = semop(semId, &operation, 1);
+    myassert(ret != -1 , " ");
+}
+
+//-----------------------------------------------------------------
+// On sort de la  SC
+static void sortirSC(int semId)
+{
+    // TODO
+    struct sembuf operation = {0, +1, 0};
+    int ret = semop(semId, &operation, 1);
+    myassert(ret != -1 , " ");
+}
+
+static int my_semget(char * kEY , int projectID)
+{
+    // TODO
+    key_t cle = ftok(kEY, projectID);
+	myassert(cle != -1, " ");
+    int semId = semget(cle, 1, 0);
+	myassert(semId != -1 ," ");
+    return semId;
 }
 
 
@@ -373,6 +402,11 @@ int main(int argc, char * argv[])
         //       . pour empêcher que 2 clients communiquent simultanément
         //       . le mutex est déjà créé par le master
         // - ouvrir les tubes nommés (ils sont déjà créés par le master)
+        int semId = my_semget(MUTEX ,PROJID);
+        int precedence =my_semget(MONFICHIER , PROJID2) ;
+        entrerSC(semId) ;
+        sortirSC(precedence) ;
+        printf("je suis en SC \n") ;
         int open_CTM = open(FD_CTOM , O_WRONLY) ;
         myassert(open_CTM != -1 , " ") ;
 
@@ -381,6 +415,7 @@ int main(int argc, char * argv[])
 		{
         data.elt = strtof(argv[2], NULL);
         }
+        
         sendData(&data) ;
         int close_res =close(open_CTM);
           myassert(open_CTM != -1 , " ") ;
@@ -391,8 +426,11 @@ int main(int argc, char * argv[])
         receiveAnswer(&data) ;
         close_res = close(open_MTC) ;
         myassert(close_res != -1 , " ") ;
+
       
                 printf("fin client\n") ;
+                
+                   sortirSC(semId) ;
         //       . les ouvertures sont bloquantes, il faut s'assurer que
         //         le master ouvre les tubes dans le même ordre
         //END TODO

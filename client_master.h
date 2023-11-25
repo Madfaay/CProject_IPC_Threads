@@ -31,6 +31,10 @@
 //TODO
 #define FD_CTOM "fdClient_To_Master" //TUBE
 #define FD_MTOC "fdMaster_To_CLient" // TUBE
+#define MUTEX "client_master.h" //mutex
+#define MONFICHIER "client_master.h" //semaphore
+#define PROJID 5
+#define PROJID2 7
 // Vous pouvez mettre ici des informations soit communes au client et au
 // master, soit liées aux deux :
 // . structures de données
