@@ -330,7 +330,7 @@ void receiveAnswer(const Data *data)
 			
 	}
 	
-	if(data->order ==MW_ORDER_PRINT)
+	if(data->order ==CM_ORDER_PRINT)
 	{
 		printf("on est la \n" ) ;
 		read_res = read(data->openRes , &accuse , sizeof(int)) ;

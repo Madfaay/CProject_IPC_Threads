@@ -482,7 +482,42 @@ static void printAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre print\n", getpid(), getppid(), 3.14 /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int accuse ;
+    int write_res;
+    int read_res;
+    
+    if(data->fg == true)
+    {
+    
+    write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
+	myassert(write_res != -1 , "" ) ;
+  
+	read_res = read(data->fdFilsG_To_Parent[0] , &accuse , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	
+    }
+    
+    printf("j'ai l'element %f , de cardinalite %d\n " , data->elt , data->cardinality) ;
+   
 
+    
+     if(data->fd == true)
+    {
+    
+   write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
+	myassert(write_res != -1 , "" ) ;
+	read_res = read(data->fdFilsD_To_Parent[0] , &accuse , sizeof(int)) ;
+	myassert(read_res != -1 , "" ) ;
+	
+    }
+    
+     accuse =MW_ANSWER_PRINT ;
+    write_res = write(data->fdOut , &accuse , sizeof(int)) ;
+     myassert(write_res != -1 , "" ) ;
+
+    
+   
+    
     //TODO
     // - si le fils gauche existe
     //       . envoyer ordre print (cf. master_worker.h)

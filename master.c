@@ -28,7 +28,7 @@
  * Données persistantes d'un master
  ************************************************************************/
  
- static int compteur = 0 ;
+static int compteur = 0 ;
 typedef struct
 {
 
@@ -431,18 +431,33 @@ void orderPrint(Data *data)
     TRACE0("[master] ordre affichage\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int write_res ;
-        	printf("on est la\n") ;
+
 
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
     if(compteur==0)
     {
-    	int rep = MW_ORDER_PRINT ;
+    	int rep = CM_ANSWER_PRINT_OK ;
     	write_res = write(data->openRes , &rep , sizeof(int)) ;
-    	printf("on est la\n") ;
     	myassert(write_res !=0 , " " ) ;
     	
     }
+    else
+    {
+    	int order = MW_ORDER_PRINT;
+        write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
+			myassert(write_res != -1 ," ") ;
+		int accuse;
+		int read_res ;
+		read_res = read(data->openRes , &accuse , sizeof(int)) ;
+    	myassert(read_res !=0 , " " ) ;
+    	printf("accuse de worker %d \n" , accuse) ;
+    	int rep = CM_ANSWER_PRINT_OK ;
+    	write_res = write(data->openRes , &rep , sizeof(int)) ;
+    	myassert(write_res !=0 , " " ) ;
+    
+    }
+    
     // - envoyer au premier worker ordre print (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
     //   note : ce sont les workers qui font les affichages
