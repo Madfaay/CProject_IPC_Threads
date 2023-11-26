@@ -16,7 +16,7 @@
 #include "client_master.h"
 #include "master_worker.h"
 #include "string.h"  
-
+#include <pthread.h>
 
 #include <sys/ipc.h>
 #include <sys/sem.h>
@@ -61,8 +61,18 @@ typedef struct {
     float max;     // pour CM_ORDER_INSERT_MANY, CM_ORDER_LOCAL
     int nbThreads; // pour CM_ORDER_LOCAL
 
-} Data;
 
+} Data ;
+
+
+typedef struct {
+
+  float elt ;
+  int indice ;
+  float * tab ;
+  int res ;
+  int size ;
+} thData;
 
 /************************************************************************
  * Usage
@@ -232,13 +242,96 @@ static int my_semget(char * kEY , int projectID)
 // A vous de voir les paramètres nécessaires  (aucune variable globale autorisée)
 //END TODO
 
+void * thread_function(void * arg)
+{
+
+thData * thdata = (thData*) arg ;
+int indice = thdata->indice ;
+		printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
+for(int i = indice; i < indice + thdata->size ; i++)
+{
+		printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
+	if (thdata->elt == thdata->tab[i])
+	{
+	
+
+	
+		thdata->res+= 1 ;
+	
+	}
+
+}
+    	
+    	
+	
+}
+
 void lauchThreads(const Data *data)
 {
     //TODO déclarations nécessaires : mutex, ...
     int result = 0;
+    pthread_mutex_t mutex ;
+    pthread_mutex_init(&mutex, NULL);
+
     float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
 
     //TODO lancement des threads
+    pthread_t th[data->nbThreads] ;
+    
+    int range = data->nb / data->nbThreads ;
+    int rest_range = data->nb % data->nbThreads ;
+    int avance = 0 ;
+    int indice ;
+    int premierindice = 0 ;
+     for(int i =0 ; i <data->nbThreads  ; i++)
+    {
+    
+    	thData d ;
+    	d.elt = data->elt ;
+    	d.size = range;
+    	if(rest_range > 0 )
+    	{
+    		if(premierindice==0)
+    		{
+    		indice = (range * i) + avance  ;
+    		premierindice ++ ;
+    		}
+    		else
+    		{
+    		indice = (range * i) + avance  ;
+    		d.indice = indice ;
+    		d.tab = tab ;
+    		rest_range -- ;
+    		avance ++ ;
+    		}
+    	}
+    	else
+    	{
+    	indice = (range * i) + avance  ;
+    	d.tab = tab ;
+    	d.indice = indice ;
+    
+    	}
+    	printf("l'indice qu'on a utiliser %d \n" , indice) ;
+
+		d.res = 0 ;
+		printf("l'indice avant d'envoyer %d , et le size %d\n" , d.indice , d.size) ;
+   		pthread_create(&(th[i]) , NULL , &thread_function , &d) ;
+   		sleep(3) ;
+   		pthread_mutex_lock(&mutex) ;
+   		result += d.res ;
+   		pthread_mutex_unlock(&mutex) ;
+	
+		
+	}
+	
+	for(int i =0 ; i < data->nbThreads ; i++)
+    {
+    	pthread_join(th[i] ,NULL)  ;
+
+    			
+	}
+	
 
     //TODO attente de la fin des threads
 
@@ -269,6 +362,8 @@ void lauchThreads(const Data *data)
         printf("=> PB ! le résultat calculé par les threads est incorrect\n");
 
     //TODO libération des ressources
+        pthread_mutex_destroy(&mutex);
+        free(tab) ;
 }
 
 
