@@ -286,9 +286,9 @@ void lauchThreads(const Data *data)
      for(int i =0 ; i <data->nbThreads  ; i++)
     {
     
-    	thData d ;
-    	d.elt = data->elt ;
-    	d.size = range;
+    	thData * d = (thData*)malloc(sizeof(thData)) ;
+    	d->elt = data->elt ;
+    	d->size = range;
     	if(rest_range > 0 )
     	{
     		if(premierindice==0)
@@ -299,8 +299,8 @@ void lauchThreads(const Data *data)
     		else
     		{
     		indice = (range * i) + avance  ;
-    		d.indice = indice ;
-    		d.tab = tab ;
+    		d->indice = indice ;
+    		d->tab = tab ;
     		rest_range -- ;
     		avance ++ ;
     		}
@@ -308,19 +308,20 @@ void lauchThreads(const Data *data)
     	else
     	{
     	indice = (range * i) + avance  ;
-    	d.tab = tab ;
-    	d.indice = indice ;
+    	d->tab = tab ;
+    	d->indice = indice ;
     
     	}
     	printf("l'indice qu'on a utiliser %d \n" , indice) ;
 
-		d.res = 0 ;
-		printf("l'indice avant d'envoyer %d , et le size %d\n" , d.indice , d.size) ;
-   		pthread_create(&(th[i]) , NULL , &thread_function , &d) ;
-   		sleep(3) ;
+		d->res = 0 ;
+		printf("l'indice avant d'envoyer %d , et le size %d\n" , d->indice , d->size) ;
+   		pthread_create(&(th[i]) , NULL , &thread_function , d) ;
+   		sleep(1);
    		pthread_mutex_lock(&mutex) ;
-   		result += d.res ;
+   		result += d->res ;
    		pthread_mutex_unlock(&mutex) ;
+   		free(d) ;
 	
 		
 	}
