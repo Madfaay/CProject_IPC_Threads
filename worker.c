@@ -107,6 +107,7 @@ void stopAction(Data *data)
     {
     	  write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
 		  myassert(write_res != -1 , "" ) ;
+		  wait(NULL) ;
 
     }
     
@@ -114,7 +115,7 @@ void stopAction(Data *data)
     {
     	  write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
 		  myassert(write_res != -1 , "" ) ;
-
+		  wait(NULL) ;
     }
     
       
@@ -198,7 +199,9 @@ static void minimumAction(Data *data)
   	int write_res ;
 	if(data->fg==false)
 	{
-
+				int accuse = MW_ANSWER_MINIMUM ;
+				write_res = write(data->fdToMaster , &accuse , sizeof(float)) ;
+				myassert(write_res != -1 , "" ) ;
 				float res = data->elt ;
 				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
 				myassert(write_res != -1 , "" ) ;
@@ -253,10 +256,72 @@ static void maximumAction(Data *data)
  ************************************************************************/
 static void existAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre exist\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre exist\n", getpid(), getppid(), data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
     //TODO
+    float elt ;
+
+    int read_res = read(data->fdIn , &elt , sizeof(float)) ;
+    printf("j'ai sa comme element a chercher %f\n" , elt);
+    myassert(read_res != -1 , " ") ;
+    if(elt == data->elt)
+    {
+    	int accuse = 40 ;
+    	int write_res = write(data->fdToMaster , &accuse , sizeof(int));
+    		myassert(write_res != -1 , " ") ;
+    		int card = data->cardinality ;
+            write_res =write(data->fdToMaster , &card , sizeof(int));
+            myassert(write_res != -1 , " ") ;
+    }
+    
+    else
+    {
+    printf("je suis dans else de worker\n") ;
+    	int order = data->order ;
+    	int write_res ;
+    	if(elt < data->elt) 
+    	{
+   		 if(data->fg==true)
+    		{
+    	write_res = write(data->fdsG[1] , &(order) , sizeof(int)) ;
+		myassert(write_res != -1 , "" ) ;
+		write_res = write(data->fdsG[1] , &(elt) , sizeof(float)) ;
+		myassert(write_res != -1 , "" ) ;
+    		}
+    	 else
+    	 {
+    	int accuse = MW_ANSWER_EXIST_NO;
+    	 write_res = write(data->fdToMaster , &accuse , sizeof(int));
+    	 }
+    	 
+    	 }
+       	if(elt > data->elt) 
+       	{
+       	 if(data->fd==true)
+    		{
+    	write_res = write(data->fdsD[1] , &(order) , sizeof(int)) ;
+		myassert(write_res != -1 , "" ) ;
+		write_res = write(data->fdsD[1] , &(elt) , sizeof(float)) ;
+		myassert(write_res != -1 , "" ) ;
+    		}
+    	 else
+    	 {
+    	int accuse = MW_ANSWER_EXIST_NO;
+    	 write_res = write(data->fdToMaster , &accuse , sizeof(int));
+    	 }
+       	
+    
+    		}
+    }
+    
+    
+
+    
+    
+    
+    
+    
     // - recevoir l'élément à tester en provenance du père
     // - si élément courant == élément à tester
     //       . envoyer au master l'accusé de réception de réussite (cf. master_worker.h)

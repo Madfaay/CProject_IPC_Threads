@@ -65,14 +65,6 @@ typedef struct {
 } Data ;
 
 
-typedef struct {
-
-  float elt ;
-  int indice ;
-  float * tab ;
-  int res ;
-  int size ;
-} thData;
 
 /************************************************************************
  * Usage
@@ -233,6 +225,15 @@ static int my_semget(char * kEY , int projectID)
  ************************************************************************/
 //TODO Une structure pour les arguments à passer à un thread (aucune variable globale autorisée)
 
+typedef struct {
+
+  float elt ;
+  int indice ;
+  float * tab ;
+  int *res ;
+  int size ;
+  pthread_mutex_t *mutex ;
+} thData;
 //TODO
 // Code commun à tous les threads
 // Un thread s'occupe d'une portion du tableau et compte en interne le nombre de fois
@@ -245,22 +246,26 @@ static int my_semget(char * kEY , int projectID)
 void * thread_function(void * arg)
 {
 
-thData * thdata = (thData*) arg ;
-int indice = thdata->indice ;
-		printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
-for(int i = indice; i < indice + thdata->size ; i++)
-{
-		printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
-	if (thdata->elt == thdata->tab[i])
+	thData * thdata = (thData*) arg ;
+	int indice = thdata->indice ;
+			//printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
+	for(int i = indice; i < indice + thdata->size ; i++)
 	{
-	
+			//printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
+		if (thdata->elt == thdata->tab[i])
+		{
+		
 
-	
-		thdata->res+= 1 ;
-	
+		pthread_mutex_lock(thdata->mutex) ;
+		
+			*(thdata->res)+= 1 ;
+	    pthread_mutex_unlock(thdata->mutex) ;
+		
+		}
+
 	}
-
-}
+	
+	return NULL ;
     	
     	
 	
@@ -283,12 +288,15 @@ void lauchThreads(const Data *data)
     int avance = 0 ;
     int indice ;
     int premierindice = 0 ;
+    thData ** d = (thData**)malloc(sizeof(thData*)*data->nbThreads) ;
      for(int i =0 ; i <data->nbThreads  ; i++)
     {
     
-    	thData * d = (thData*)malloc(sizeof(thData)) ;
-    	d->elt = data->elt ;
-    	d->size = range;
+    	d[i] = (thData*)malloc(sizeof(thData)) ;
+    	d[i]->elt = data->elt ;
+    	d[i]->size = range;
+    	d[i]->res = &result ;
+    	d[i]->mutex = &mutex ;
     	if(rest_range > 0 )
     	{
     		if(premierindice==0)
@@ -299,8 +307,8 @@ void lauchThreads(const Data *data)
     		else
     		{
     		indice = (range * i) + avance  ;
-    		d->indice = indice ;
-    		d->tab = tab ;
+    		d[i]->indice = indice ;
+    		d[i]->tab = tab ;
     		rest_range -- ;
     		avance ++ ;
     		}
@@ -308,20 +316,15 @@ void lauchThreads(const Data *data)
     	else
     	{
     	indice = (range * i) + avance  ;
-    	d->tab = tab ;
-    	d->indice = indice ;
+    	d[i]->tab = tab ;
+    	d[i]->indice = indice ;
     
     	}
-    	printf("l'indice qu'on a utiliser %d \n" , indice) ;
+    	//printf("l'indice qu'on a utiliser %d \n" , indice) ;
+   		pthread_create(&(th[i]) , NULL , &thread_function , d[i]) ;
+		//printf("l'indice avant d'envoyer %d , et le size %d\n" , d[i]->indice , d[i]->size) ;
 
-		d->res = 0 ;
-		printf("l'indice avant d'envoyer %d , et le size %d\n" , d->indice , d->size) ;
-   		pthread_create(&(th[i]) , NULL , &thread_function , d) ;
-   		sleep(1);
-   		pthread_mutex_lock(&mutex) ;
-   		result += d->res ;
-   		pthread_mutex_unlock(&mutex) ;
-   		free(d) ;
+   		
 	
 		
 	}
@@ -332,6 +335,7 @@ void lauchThreads(const Data *data)
 
     			
 	}
+	
 	
 
     //TODO attente de la fin des threads
@@ -365,6 +369,7 @@ void lauchThreads(const Data *data)
     //TODO libération des ressources
         pthread_mutex_destroy(&mutex);
         free(tab) ;
+       
 }
 
 
@@ -411,13 +416,10 @@ void receiveAnswer(const Data *data)
     myassert(data != NULL, "pb !");   //TODO à enlever (présent pour éviter le warning)
     int read_res ;
     int accuse ;
-    if(data->order == CM_ANSWER_INSERT_OK)
-    {
 
- 	 read_res = read(data->openRes , &accuse , sizeof(int) );
+ 	read_res = read(data->openRes , &accuse , sizeof(int) );
 	myassert(read_res != -1 , " ") ;
-		printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
-	}
+	printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
 	if(data->order == MW_ORDER_MAXIMUM)
 	{
 	float rep ;
@@ -455,14 +457,27 @@ void receiveAnswer(const Data *data)
 			
 	}
 	
-	if(data->order ==CM_ORDER_PRINT)
-	{
-		printf("on est la \n" ) ;
-		read_res = read(data->openRes , &accuse , sizeof(int)) ;
-		myassert(accuse!=0 , " ") ;
-		printf("j'ai recu l'accuse %d \n " , accuse) ;
 	
-	}
+	if(data->order ==CM_ORDER_EXIST)
+	{
+	printf("on arrive la ou pas client 458 \n") ;
+		if (accuse==CM_ANSWER_EXIST_NO)
+		{
+			printf("il n'existe pas \n") ;
+	
+		}
+		
+		else
+		{
+		int cardinality ;
+		read_res = read(data->openRes , &cardinality , sizeof(int) );
+			myassert(read_res != 0 , " ") ;
+			printf("il existe avec une cardinalite %d\n " , cardinality) ;
+		
+		}
+	
+	}	
+	
 	
 
 
@@ -501,7 +516,6 @@ int main(int argc, char * argv[])
         int semId = my_semget(MUTEX ,PROJID);
         int precedence =my_semget(MONFICHIER , PROJID2) ;
         entrerSC(semId) ;
-        sortirSC(precedence) ;
         printf("je suis en SC \n") ;
         int open_CTM = open(FD_CTOM , O_WRONLY) ;
         myassert(open_CTM != -1 , " ") ;
@@ -527,6 +541,7 @@ int main(int argc, char * argv[])
                 printf("fin client\n") ;
                 
                    sortirSC(semId) ;
+        sortirSC(precedence) ;
         //       . les ouvertures sont bloquantes, il faut s'assurer que
         //         le master ouvre les tubes dans le même ordre
         //END TODO
