@@ -519,9 +519,6 @@ void orderPrint(Data *data)
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
    
-    	int rep = CM_ANSWER_PRINT_OK ;
-    	write_res = write(data->openRes , &rep , sizeof(int)) ;
-    	myassert(write_res !=0 , " " ) ;
     	
    if(compteur!=0)
     {
@@ -530,14 +527,15 @@ void orderPrint(Data *data)
 			myassert(write_res != -1 ," ") ;
 		int accuse;
 		int read_res ;
-		read_res = read(data->openRes , &accuse , sizeof(int)) ;
+		read_res = read(data->fds_To_Master[0] , &accuse , sizeof(int)) ;
     	myassert(read_res !=0 , " " ) ;
     	printf("accuse de worker %d \n" , accuse) ;
-    	int rep = CM_ANSWER_PRINT_OK ;
+    	
+    }
+    
+         int rep = CM_ANSWER_PRINT_OK ;
     	write_res = write(data->openRes , &rep , sizeof(int)) ;
     	myassert(write_res !=0 , " " ) ;
-    
-    }
     
     // - envoyer au premier worker ordre print (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
