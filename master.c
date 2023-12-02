@@ -34,6 +34,7 @@ typedef struct
 {
 
    int openRes ;
+   int fdFromClient ;
    int accuse ;
    int fds_To_Master[2] ;
    int fds_To_Worker[2] ;
@@ -266,7 +267,7 @@ void orderExist(Data *data)
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int accuse ;
     int write_res ;
-   
+   printf("l'element a cherche print de master %f \n " , data->elt) ;
     
     if (compteur==0)
     {
@@ -283,16 +284,24 @@ void orderExist(Data *data)
 		myassert(write_res != -1 ," ") ;
         int read_res = read(data->fdWorker_To_Master[0] , &accuse , sizeof(int)) ;
         myassert(read_res != -1 ," ") ;
-        printf("j'ai recu l'accuse %d \n" , accuse) ;
-        write_res = write(data->openRes , &accuse , sizeof(int)) ;
-        myassert(write_res != -1 , " ") ;
-        if(accuse == 40) 
+        printf("j'ai recu l'accuse de worker %d \n" , accuse) ;
+
+        if(accuse == MW_ANSWER_EXIST_YES) 
         {
+        accuse = CM_ANSWER_EXIST_YES ;
+         write_res = write(data->openRes , &accuse , sizeof(int)) ;
+        myassert(write_res != -1 , " ") ;
 		    int cardinality ;
 		    read_res = read(data->fdWorker_To_Master[0] , &cardinality , sizeof(int)) ;
 		    myassert(read_res != -1 , " ") ;
 		    write_res = write(data->openRes , &cardinality , sizeof(int)) ;
 		    myassert(write_res != -1 , " ") ;
+        }
+        else
+        {
+        accuse = CM_ANSWER_EXIST_NO ;
+        write_res = write(data->openRes , &accuse  , sizeof(int) );
+        myassert(write_res != -1 , " ") ;
         }
        
     
@@ -429,7 +438,7 @@ void orderInsert(Data *data)
 				
 				
 
-    			    printf("%s + %s + %s + %s on est a master proc fils string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
+    			    //printf("%s + %s + %s + %s on est a master proc fils string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
 
@@ -496,6 +505,23 @@ void orderInsertMany(Data *data)
 {
     TRACE0("[master] ordre insertion tableau\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
+    int taille ; 
+    int read_res = read(data->fdFromClient ,  &taille , sizeof(int)) ;
+    myassert(read_res != -1  , " " ) ;
+    printf("j'ai bien recu la taille %d \n " , taille) ;
+    float val ;
+    float * tab =(float*)malloc(sizeof(float) * taille) ;
+    for (int i =0 ; i < taille ; i++)
+    {
+        read_res = read(data->fdFromClient , &(tab[i]) , sizeof(float)) ;
+        printf("l'element recu %f \n " , tab[i]) ;
+        data->elt = tab[i] ;
+        orderInsert(data) ;
+    }
+    int accuse = CM_ANSWER_INSERT_MANY_OK ;
+    printf("l'accuse %d \n " , accuse) ;
+    int write_res = write(data->openRes , &accuse , sizeof(int)) ;
+    myassert(write_res != -1 , " " ) ;
 
     //TODO
     // - recevoir le tableau d'éléments à insérer en provenance du client
@@ -576,6 +602,7 @@ void loop(Data *data)
         int order_recieve = read(open_CTM , &(data->order) , sizeof(int)) ;
         myassert(order_recieve != -1 , " " ) ;
         data->openRes = open_MTC ;
+        data->fdFromClient = open_CTM ; 
         switch(data->order)
         {
           case CM_ORDER_STOP:

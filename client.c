@@ -384,24 +384,40 @@ void sendData(const Data *data)
     //TODO
     
  
- 
-    printf("%d l'ordres est \n" , data->order) ;
-    if(data->order == CM_ORDER_INSERT) 
+   int order = data->order ;
+   int write_res = write(data->openRes , &(order), sizeof(int)) ;
+    myassert(write_res != -1 , " ") ;
+    printf("L'order est %d \n" , order) ;
+    
+    if(order == CM_ORDER_EXIST)
     {
-    printf("l'elt %f en cleint \n" , data->elt) ;
-    int order = data->order ;
-    float num = data->elt ;
-    int write_res = write(data->openRes , &(order), sizeof(int)) ;
-    	myassert(write_res != -1 , " ") ;
+    write_res = write(data->openRes , &(data->elt), sizeof(float)) ;
+    myassert(write_res != -1 , " ") ;
+    }
+
+    if(order == CM_ORDER_INSERT) 
+    {
+         printf("l'elt %f en client \n" , data->elt) ;
+        float num = data->elt ;
     	write_res = write(data->openRes, &(num), sizeof(float)) ;
     	myassert(write_res != -1 , " ") ;
     }
     
-    else
+    if(order == CM_ORDER_INSERT_MANY)
     {
-    		    int order = data->order ;
-        		int write_res = write(data->openRes , &(order), sizeof(int)) ;
-    			myassert(write_res != -1 , " ") ;
+
+            float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
+            int taille = data->nb ;
+            float val ;
+            write_res = write(data->openRes, &(taille), sizeof(int)) ;
+            for(int i =0 ; i< taille ; i ++)
+            {
+                write(data->openRes , &(tab[i]) , sizeof(float)) ; 
+            
+            }
+           
+
+    free(tab) ;
     }
     
     // - envoi de l'ordre au master (cf. CM_ORDER_* dans client_master.h)
@@ -460,7 +476,6 @@ void receiveAnswer(const Data *data)
 	
 	if(data->order ==CM_ORDER_EXIST)
 	{
-	printf("on arrive la ou pas client 458 \n") ;
 		if (accuse==CM_ANSWER_EXIST_NO)
 		{
 			printf("il n'existe pas \n") ;
@@ -521,7 +536,7 @@ int main(int argc, char * argv[])
         myassert(open_CTM != -1 , " ") ;
 
         data.openRes = open_CTM ;
-		if(data.order == CM_ORDER_INSERT)
+		if(data.order == CM_ORDER_INSERT || data.order==CM_ORDER_EXIST)
 		{
         data.elt = strtof(argv[2], NULL);
         }

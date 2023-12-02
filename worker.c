@@ -267,7 +267,8 @@ static void existAction(Data *data)
     myassert(read_res != -1 , " ") ;
     if(elt == data->elt)
     {
-    	int accuse = 40 ;
+        printf("je passe par le premier if ou pas \n") ;
+    	int accuse = MW_ANSWER_EXIST_YES ;
     	int write_res = write(data->fdToMaster , &accuse , sizeof(int));
     		myassert(write_res != -1 , " ") ;
     		int card = data->cardinality ;
@@ -277,7 +278,6 @@ static void existAction(Data *data)
     
     else
     {
-    printf("je suis dans else de worker\n") ;
     	int order = data->order ;
     	int write_res ;
     	if(elt < data->elt) 
@@ -440,7 +440,7 @@ static void insertAction(Data *data)
     				sprintf(fdWorker, "%d", data->fdToMaster);
 				
 
-    			    printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+    			   // printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
 					   //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
@@ -457,7 +457,7 @@ static void insertAction(Data *data)
 		  		else
 		  		
 		  		{
-		  		   printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+		  		  // printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 		  					int order = data->order ;
 		  					write(data->fdsD[1] , &order , sizeof(int)) ;
 		  					write(data->fdsD[1] , &elt , sizeof(int)) ;
@@ -486,7 +486,7 @@ static void insertAction(Data *data)
     				sprintf(fdWorker, "%d", data->fdToMaster);
 				
 
-    			    printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+    			   // printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
 					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
 					char *path = "./worker" ;
 
