@@ -25,19 +25,19 @@ typedef struct
     // communication avec le fils gauche s'il existe (2 tubes)
     // communication avec le fils droit s'il existe (2 tubes)
     //TODO
-    int order;
-    int cardinality;
+    int order; 
+    int cardinality; // la cardinalite de l'element .
     float elt ;
-    int fdIn ;
-    int fdOut ;
-    int fdToMaster ;
-    int fdsG[2] ;
-    int fdsD[2] ;
-    int fdFilsG_To_Parent[2] ;
-    int fdFilsD_To_Parent[2] ;
-    bool fg;
-    bool fd;
-    float sumRes ;
+    int fdIn ; //le fd du pere vers ce worker .
+    int fdOut ; //le fd de ce worker vers son perer
+    int fdToMaster ; // un fd direct vers le matser .
+    int fdsG[2] ; // un tube anonyme avec son fils gauche .
+    int fdsD[2] ; // un tube anonyme avec sont fils droit .
+    int fdFilsG_To_Parent[2] ; // un tube anonyme du fils gauche (s'il existe) vers ce worker .
+    int fdFilsD_To_Parent[2] ; // un tube anonyme du fils droit (s'il existe) vers ce worker .
+    bool fg; // on conserve l'infomation d'existence d'un fils gauche ou pas par un bool.
+    bool fd; // pareil pour la droit .
+    float sumRes ; // utile pour l'ordre sum ou on a le resultat de worker + celui des ses enfnats .
 
 
 } Data;

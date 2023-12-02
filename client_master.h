@@ -31,10 +31,10 @@
 //TODO
 #define FD_CTOM "fdClient_To_Master" //TUBE
 #define FD_MTOC "fdMaster_To_CLient" // TUBE
-#define MUTEX "client_master.h" //mutex
-#define MONFICHIER "client_master.h" //semaphore
-#define PROJID 5
-#define PROJID2 7
+#define SC_CLIENTS "client_master.h" // un mutex pour la section critique entre les clients .
+#define MUTEX_PRECEDENCE "client_master.h" //un mutex pour la precedence entre client et master
+#define SC_ID 5
+#define PRECEDENCE_ID 7
 // Vous pouvez mettre ici des informations soit communes au client et au
 // master, soit liées aux deux :
 // . structures de données

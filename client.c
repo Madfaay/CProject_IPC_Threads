@@ -337,6 +337,14 @@ void lauchThreads(const Data *data)
 
 
     }
+    
+    for(int i =0 ; i < data->nbThreads ; i ++)
+    {
+
+            free(d[i]) ;
+            free(d) ;
+
+    }
 
 
 
@@ -410,7 +418,6 @@ void sendData(const Data *data)
 
         float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
         int taille = data->nb ;
-        float val ;
         write_res = write(data->openRes, &(taille), sizeof(int)) ;
         for(int i =0 ; i< taille ; i ++)
         {
@@ -530,8 +537,8 @@ int main(int argc, char * argv[])
         //       . pour empêcher que 2 clients communiquent simultanément
         //       . le mutex est déjà créé par le master
         // - ouvrir les tubes nommés (ils sont déjà créés par le master)
-        int semId = my_semget(MUTEX,PROJID);
-        int precedence =my_semget(MONFICHIER, PROJID2) ;
+        int semId = my_semget(SC_CLIENTS,SC_ID);
+        int precedence =my_semget(MUTEX_PRECEDENCE, PRECEDENCE_ID) ;
         entrerSC(semId) ;
         printf("je suis en SC \n") ;
         int open_CTM = open(FD_CTOM, O_WRONLY) ;
