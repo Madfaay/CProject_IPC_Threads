@@ -28,19 +28,19 @@
 /************************************************************************
  * Données persistantes d'un master
  ************************************************************************/
- 
+
 static int compteur = 0 ;
 typedef struct
 {
 
-   int openRes ;
-   int fdFromClient ;
-   int accuse ;
-   int fds_To_Master[2] ;
-   int fds_To_Worker[2] ;
-   int fdWorker_To_Master[2];
-   int precedence ;
-    
+    int openRes ;
+    int fdFromClient ;
+    int accuse ;
+    int fds_To_Master[2] ;
+    int fds_To_Worker[2] ;
+    int fdWorker_To_Master[2];
+    int precedence ;
+
     // infos pour le travail à faire (récupérées sur la ligne de commande)
     int order;     // ordre de l'utilisateur (cf. CM_ORDER_* dans client_master.h)
     float elt;     // pour CM_ORDER_EXIST, CM_ORDER_INSERT, CM_ORDER_LOCAL
@@ -69,7 +69,7 @@ static void usage(const char *exeName, const char *message)
 void init(Data *data)
 {
     myassert(data != NULL, "il faut l'environnement d'exécution");
-  
+
 
 
 }
@@ -83,22 +83,22 @@ void orderStop(Data *data)
     TRACE0("[master] ordre stop\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
-      int reponse = CM_ANSWER_STOP_OK ;
-	  int write_res = write(data->openRes , &reponse  , sizeof(int) );
-	  myassert(write_res != -1 , " ") ;
-	  
-    
-    
+    int reponse = CM_ANSWER_STOP_OK ;
+    int write_res = write(data->openRes, &reponse, sizeof(int) );
+    myassert(write_res != -1, " ") ;
+
+
+
     if(compteur!=0)
     {
-		int order = CM_ORDER_STOP;
-	    write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-		wait(NULL) ;
+        int order = CM_ORDER_STOP;
+        write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        wait(NULL) ;
 
-	}
-    
-  
+    }
+
+
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
     // - envoyer au premier worker ordre de fin (cf. master_worker.h)
@@ -119,32 +119,32 @@ void orderHowMany(Data *data)
     int nb_elements = 0;
     int nb_all_elements = 0 ;
     int accuse = CM_ANSWER_HOW_MANY_OK ;
-    write_res = write(data->openRes , &accuse , sizeof(int)) ;
-	myassert(write_res!=0 , " ") ;
+    write_res = write(data->openRes, &accuse, sizeof(int)) ;
+    myassert(write_res!=0, " ") ;
     if(compteur==0)
     {
-		write_res = write(data->openRes , &nb_all_elements , sizeof(int)) ;
-		myassert(write_res!=0 , " ") ;
-		write_res = write(data->openRes , &nb_elements , sizeof(int)) ;
-		myassert(write_res!=0 , " ") ;
+        write_res = write(data->openRes, &nb_all_elements, sizeof(int)) ;
+        myassert(write_res!=0, " ") ;
+        write_res = write(data->openRes, &nb_elements, sizeof(int)) ;
+        myassert(write_res!=0, " ") ;
 
-	}
-	   else
+    }
+    else
     {
-    	int order = CM_ORDER_HOW_MANY;
-		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-		int read_res = read(data->fds_To_Master[0] , &nb_elements , sizeof(int)) ;
-			    myassert(read_res != -1 ," ") ;
-			read_res = read(data->fds_To_Master[0] , &nb_all_elements , sizeof(int)) ;
-			    myassert(read_res != -1 ," ") ;
-	     	write_res = write(data->openRes , &nb_all_elements , sizeof(int)) ;
-			myassert(write_res!=0 , " ") ;
-			write_res = write(data->openRes , &nb_elements , sizeof(int)) ;
-			myassert(write_res!=0 , " ") ;
-			printf("je print le resultat a master de how many nbdifferents : %d , nbtotal : %d \n " , nb_elements , nb_all_elements) ;
-			
-    
+        int order = CM_ORDER_HOW_MANY;
+        int write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        int read_res = read(data->fds_To_Master[0], &nb_elements, sizeof(int)) ;
+        myassert(read_res != -1," ") ;
+        read_res = read(data->fds_To_Master[0], &nb_all_elements, sizeof(int)) ;
+        myassert(read_res != -1," ") ;
+        write_res = write(data->openRes, &nb_all_elements, sizeof(int)) ;
+        myassert(write_res!=0, " ") ;
+        write_res = write(data->openRes, &nb_elements, sizeof(int)) ;
+        myassert(write_res!=0, " ") ;
+        printf("je print le resultat a master de how many nbdifferents : %d , nbtotal : %d \n ", nb_elements, nb_all_elements) ;
+
+
     }
 
     //TODO
@@ -167,38 +167,38 @@ void orderMinimum(Data *data)
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int reponse ;
     int write_res ;
- if(compteur==0)
+    if(compteur==0)
     {
-    
-     reponse = CM_ANSWER_MINIMUM_EMPTY  ;
-	 write_res = write(data->openRes , &reponse  , sizeof(int) );
-	myassert(write_res != -1 , " ") ;
-    	
-    
-    }	
-    
-    else
-    
-    {
-		
-    	
-    	int order = CM_ORDER_MINIMUM;
-	    write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		    myassert(write_res != -1 ," ") ;
-		int accuse ;
-		int read_res = read(data->fdWorker_To_Master[0] , &accuse , sizeof(int)) ;  
-	    myassert(read_res != -1 ," ") ; 
-		float rep ;
-		    read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
-			myassert(read_res != -1 ," ") ;
-		    printf("je print le reponse de min a master et l'accuse %f , %d \n", rep , accuse) ;
-		    accuse =CM_ANSWER_MINIMUM_OK ;
-		    write_res = write(data->openRes , &accuse  , sizeof(int) );
-			myassert(write_res != -1 , " ") ;
-	        write_res = write(data->openRes , &rep  , sizeof(float) );
-		    myassert(write_res != -1 , " ") ;
 
-    	
+        reponse = CM_ANSWER_MINIMUM_EMPTY  ;
+        write_res = write(data->openRes, &reponse, sizeof(int) );
+        myassert(write_res != -1, " ") ;
+
+
+    }
+
+    else
+
+    {
+
+
+        int order = CM_ORDER_MINIMUM;
+        write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        int accuse ;
+        int read_res = read(data->fdWorker_To_Master[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1," ") ;
+        float rep ;
+        read_res = read(data->fdWorker_To_Master[0], &rep, sizeof(float)) ;
+        myassert(read_res != -1," ") ;
+        printf("je print le reponse de min a master et l'accuse %f , %d \n", rep, accuse) ;
+        accuse =CM_ANSWER_MINIMUM_OK ;
+        write_res = write(data->openRes, &accuse, sizeof(int) );
+        myassert(write_res != -1, " ") ;
+        write_res = write(data->openRes, &rep, sizeof(float) );
+        myassert(write_res != -1, " ") ;
+
+
     }
     //TODO
     // - si ensemble vide (pas de premier worker)
@@ -218,39 +218,39 @@ void orderMinimum(Data *data)
  ************************************************************************/
 void orderMaximum(Data *data)
 {
-	int reponse;
-	int write_res ;
+    int reponse;
+    int write_res ;
 
     TRACE0("[master] ordre maximum\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
     if(compteur==0)
     {
-    
 
-    reponse = CM_ANSWER_MAXIMUM_EMPTY  ;
-    write_res = write(data->openRes , &reponse  , sizeof(int) );
-	myassert(write_res != -1 , " ") ;
-    	
-    
-    }	
-    
+
+        reponse = CM_ANSWER_MAXIMUM_EMPTY  ;
+        write_res = write(data->openRes, &reponse, sizeof(int) );
+        myassert(write_res != -1, " ") ;
+
+
+    }
+
     else
-    
-    {
-    	reponse = CM_ANSWER_MAXIMUM_OK  ;
-    	write_res = write(data->openRes , &reponse  , sizeof(int) );
-		myassert(write_res != -1 , " ") ;
-    	int order = CM_ORDER_MAXIMUM ;
-		write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-		float rep ;
-		int read_res = read(data->fdWorker_To_Master[0] , &rep , sizeof(float)) ;
-			    myassert(read_res != -1 ," ") ;
-		printf("je print le reponse de max a master %f \n", rep) ;
-	     write_res = write(data->openRes , &rep  , sizeof(float) );
-		myassert(write_res != -1 , " ") ;
 
-    	
+    {
+        reponse = CM_ANSWER_MAXIMUM_OK  ;
+        write_res = write(data->openRes, &reponse, sizeof(int) );
+        myassert(write_res != -1, " ") ;
+        int order = CM_ORDER_MAXIMUM ;
+        write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        float rep ;
+        int read_res = read(data->fdWorker_To_Master[0], &rep, sizeof(float)) ;
+        myassert(read_res != -1," ") ;
+        printf("je print le reponse de max a master %f \n", rep) ;
+        write_res = write(data->openRes, &rep, sizeof(float) );
+        myassert(write_res != -1, " ") ;
+
+
     }
     //TODO
     // cf. explications pour le minimum
@@ -267,48 +267,48 @@ void orderExist(Data *data)
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int accuse ;
     int write_res ;
-   printf("l'element a cherche print de master %f \n " , data->elt) ;
-    
+    printf("l'element a cherche print de master %f \n ", data->elt) ;
+
     if (compteur==0)
     {
-    accuse = CM_ANSWER_EXIST_NO ;
-    write_res = write(data->openRes , &accuse  , sizeof(int) );
-	myassert(write_res != -1 , " ") ;
+        accuse = CM_ANSWER_EXIST_NO ;
+        write_res = write(data->openRes, &accuse, sizeof(int) );
+        myassert(write_res != -1, " ") ;
     }
     else
     {
-   		 int order = MW_ORDER_EXIST ;
-		write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-		write_res = write(data->fds_To_Worker[1] , &(data->elt) , sizeof(float)) ;
-		myassert(write_res != -1 ," ") ;
-        int read_res = read(data->fdWorker_To_Master[0] , &accuse , sizeof(int)) ;
-        myassert(read_res != -1 ," ") ;
-        printf("j'ai recu l'accuse de worker %d \n" , accuse) ;
+        int order = MW_ORDER_EXIST ;
+        write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        write_res = write(data->fds_To_Worker[1], &(data->elt), sizeof(float)) ;
+        myassert(write_res != -1," ") ;
+        int read_res = read(data->fdWorker_To_Master[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1," ") ;
+        printf("j'ai recu l'accuse de worker %d \n", accuse) ;
 
-        if(accuse == MW_ANSWER_EXIST_YES) 
+        if(accuse == MW_ANSWER_EXIST_YES)
         {
-        accuse = CM_ANSWER_EXIST_YES ;
-         write_res = write(data->openRes , &accuse , sizeof(int)) ;
-        myassert(write_res != -1 , " ") ;
-		    int cardinality ;
-		    read_res = read(data->fdWorker_To_Master[0] , &cardinality , sizeof(int)) ;
-		    myassert(read_res != -1 , " ") ;
-		    write_res = write(data->openRes , &cardinality , sizeof(int)) ;
-		    myassert(write_res != -1 , " ") ;
+            accuse = CM_ANSWER_EXIST_YES ;
+            write_res = write(data->openRes, &accuse, sizeof(int)) ;
+            myassert(write_res != -1, " ") ;
+            int cardinality ;
+            read_res = read(data->fdWorker_To_Master[0], &cardinality, sizeof(int)) ;
+            myassert(read_res != -1, " ") ;
+            write_res = write(data->openRes, &cardinality, sizeof(int)) ;
+            myassert(write_res != -1, " ") ;
         }
         else
         {
-        accuse = CM_ANSWER_EXIST_NO ;
-        write_res = write(data->openRes , &accuse  , sizeof(int) );
-        myassert(write_res != -1 , " ") ;
+            accuse = CM_ANSWER_EXIST_NO ;
+            write_res = write(data->openRes, &accuse, sizeof(int) );
+            myassert(write_res != -1, " ") ;
         }
-       
-    
+
+
     }
 
     //TODO
-    
+
     // - recevoir l'élément à tester en provenance du client
     // - si ensemble vide (pas de premier worker)
     //       . envoyer l'accusé de réception dédié au client (cf. client_master.h)
@@ -332,34 +332,34 @@ void orderSum(Data *data)
 {
     TRACE0("[master] ordre somme\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-	int write_res ;
+    int write_res ;
     //TODO
     if(compteur==0)
     {
-    	float reponse = 0. ;
-	    write_res = write(data->openRes , &reponse  , sizeof(float) );
-		myassert(write_res != -1 , " ") ;
-    
+        float reponse = 0. ;
+        write_res = write(data->openRes, &reponse, sizeof(float) );
+        myassert(write_res != -1, " ") ;
+
     }
     else
-    {    
-    	int order = CM_ORDER_SUM;
-    	int accuse = CM_ANSWER_SUM_OK ;
-    	write_res = write(data->openRes , &accuse , sizeof(int)) ;
-		write_res= write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-		float rep ;
-		printf("d'ici sa vient je pense avant le read \n") ;
-		int read_res = read(data->fds_To_Master[0] , &rep , sizeof(float)) ;
-			    myassert(read_res != -1 ," ") ;
-		printf("je print le reponse de sum a master %f \n", rep) ;
-	     write_res = write(data->openRes , &rep  , sizeof(float) );
-		myassert(write_res != -1 , " ") ;
-    
-    }
-    
+    {
+        int order = CM_ORDER_SUM;
+        int accuse = CM_ANSWER_SUM_OK ;
+        write_res = write(data->openRes, &accuse, sizeof(int)) ;
+        write_res= write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        float rep ;
+        printf("d'ici sa vient je pense avant le read \n") ;
+        int read_res = read(data->fds_To_Master[0], &rep, sizeof(float)) ;
+        myassert(read_res != -1," ") ;
+        printf("je print le reponse de sum a master %f \n", rep) ;
+        write_res = write(data->openRes, &rep, sizeof(float) );
+        myassert(write_res != -1, " ") ;
 
-  
+    }
+
+
+
     // - traiter le cas ensemble vide (pas de premier worker) : la somme est alors 0
     // - envoyer au premier worker ordre sum (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
@@ -368,7 +368,7 @@ void orderSum(Data *data)
     // - envoyer le résultat au client
     //END TODO
 }
- int my_semget(int nbreTokens , char * kEY ,int projectID)
+int my_semget(int nbreTokens, char * kEY,int projectID)
 {
     key_t key;
     int semId;
@@ -377,11 +377,11 @@ void orderSum(Data *data)
     key = ftok(kEY, projectID);
     assert(key != -1);
     semId = semget(key, 1, IPC_CREAT | IPC_EXCL | 0641);
-    myassert(semId != -1 , " ");
+    myassert(semId != -1, " ");
 
     ret = semctl(semId, 0, SETVAL, nbreTokens);
-    myassert(ret != -1 , " ");
-    
+    myassert(ret != -1, " ");
+
 
     return semId;
 }
@@ -390,9 +390,9 @@ void orderSum(Data *data)
 static void my_destroy(int semId)
 {
     int ret;
-    
+
     ret = semctl(semId, -1, IPC_RMID);
-    myassert(ret != -1 , " ");
+    myassert(ret != -1, " ");
 }
 
 
@@ -406,85 +406,85 @@ void orderInsert(Data *data)
 {
     TRACE0("[master] ordre insertion\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    printf("j'ai recu l'ordre %d \n" , data->order ) ;
+    printf("j'ai recu l'ordre %d \n", data->order ) ;
 
-	int reponse = CM_ANSWER_INSERT_OK ;
-	int write_res = write(data->openRes , &reponse  , sizeof(int) );
-		myassert(write_res != -1 , " ") ;
-	    compteur++ ;
-
-
-  	if(compteur==1)
-  	{
-
-		
-	    char stringfds1[50];
-	    char stringfds2[50] ;
-		char stringElement[50] ;
-		char fdWorker[50] ;
-		sprintf(stringfds1, "%d", data->fds_To_Worker[0]);
-   		sprintf(stringfds2, "%d", data->fds_To_Master[1]);
-    	sprintf(stringElement, "%f", data->elt);
-    	sprintf(fdWorker, "%d", data->fdWorker_To_Master[1]);
-		int res = fork() ;
+    int reponse = CM_ANSWER_INSERT_OK ;
+    int write_res = write(data->openRes, &reponse, sizeof(int) );
+    myassert(write_res != -1, " ") ;
+    compteur++ ;
 
 
-			
-
-				if(res ==0) 
-			
-				{
-				
-				
-				
-
-    			    //printf("%s + %s + %s + %s on est a master proc fils string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
-					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
-					char *path = "./worker" ;
-
-					execv(path , argv) ;
-
-				
-				}
-			
-			//int res_creating ;
-			//int res_work = read(data->fdWorker_To_Master[0] , &res_creating , sizeof(int)) ;
-			//myassert(res_work != -1 , "") ;
-			//if (res_creating==1000)
-			//	{
-			//	printf("premier worker est cree avec success \n") ;
-
-			//	}
-				
-		//	else
-		//	{
-				//	printf("le premier worker n'est pas creer\n") ;
-
-			//}
-
-}
+    if(compteur==1)
+    {
 
 
-else
-{
-
-		int order = CM_ORDER_INSERT ;
-		float elt = data->elt ;
-		int write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-		myassert(write_res != -1 ," ") ;
-			write_res =write(data->fds_To_Worker[1] , &elt , sizeof(float)) ;
-		myassert(write_res != -1 ," ") ;
-			
-
-
-}
+        char stringfds1[50];
+        char stringfds2[50] ;
+        char stringElement[50] ;
+        char fdWorker[50] ;
+        sprintf(stringfds1, "%d", data->fds_To_Worker[0]);
+        sprintf(stringfds2, "%d", data->fds_To_Master[1]);
+        sprintf(stringElement, "%f", data->elt);
+        sprintf(fdWorker, "%d", data->fdWorker_To_Master[1]);
+        int res = fork() ;
 
 
 
 
- 
-    
-	
+        if(res ==0)
+
+        {
+
+
+
+
+            //printf("%s + %s + %s + %s on est a master proc fils string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker) ;
+            char * argv[] = {"./worker", stringElement, stringfds1, stringfds2, fdWorker,  NULL } ;
+            char *path = "./worker" ;
+
+            execv(path, argv) ;
+
+
+        }
+
+        //int res_creating ;
+        //int res_work = read(data->fdWorker_To_Master[0] , &res_creating , sizeof(int)) ;
+        //myassert(res_work != -1 , "") ;
+        //if (res_creating==1000)
+        //	{
+        //	printf("premier worker est cree avec success \n") ;
+
+        //	}
+
+        //	else
+        //	{
+        //	printf("le premier worker n'est pas creer\n") ;
+
+        //}
+
+    }
+
+
+    else
+    {
+
+        int order = CM_ORDER_INSERT ;
+        float elt = data->elt ;
+        int write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        write_res =write(data->fds_To_Worker[1], &elt, sizeof(float)) ;
+        myassert(write_res != -1," ") ;
+
+
+
+    }
+
+
+
+
+
+
+
     //TODO
     // - recevoir l'élément à insérer en provenance du client
     // - si ensemble vide (pas de premier worker)
@@ -505,23 +505,23 @@ void orderInsertMany(Data *data)
 {
     TRACE0("[master] ordre insertion tableau\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    int taille ; 
-    int read_res = read(data->fdFromClient ,  &taille , sizeof(int)) ;
-    myassert(read_res != -1  , " " ) ;
-    printf("j'ai bien recu la taille %d \n " , taille) ;
+    int taille ;
+    int read_res = read(data->fdFromClient,  &taille, sizeof(int)) ;
+    myassert(read_res != -1, " " ) ;
+    printf("j'ai bien recu la taille %d \n ", taille) ;
     float val ;
     float * tab =(float*)malloc(sizeof(float) * taille) ;
     for (int i =0 ; i < taille ; i++)
     {
-        read_res = read(data->fdFromClient , &(tab[i]) , sizeof(float)) ;
-        printf("l'element recu %f \n " , tab[i]) ;
+        read_res = read(data->fdFromClient, &(tab[i]), sizeof(float)) ;
+        printf("l'element recu %f \n ", tab[i]) ;
         data->elt = tab[i] ;
         orderInsert(data) ;
     }
     int accuse = CM_ANSWER_INSERT_MANY_OK ;
-    printf("l'accuse %d \n " , accuse) ;
-    int write_res = write(data->openRes , &accuse , sizeof(int)) ;
-    myassert(write_res != -1 , " " ) ;
+    printf("l'accuse %d \n ", accuse) ;
+    int write_res = write(data->openRes, &accuse, sizeof(int)) ;
+    myassert(write_res != -1, " " ) ;
 
     //TODO
     // - recevoir le tableau d'éléments à insérer en provenance du client
@@ -544,25 +544,25 @@ void orderPrint(Data *data)
 
     //TODO
     // - traiter le cas ensemble vide (pas de premier worker)
-   
-    	
-   if(compteur!=0)
+
+
+    if(compteur!=0)
     {
-    	int order = MW_ORDER_PRINT;
-        write_res = write(data->fds_To_Worker[1] , &order , sizeof(int)) ;
-			myassert(write_res != -1 ," ") ;
-		int accuse;
-		int read_res ;
-		read_res = read(data->fds_To_Master[0] , &accuse , sizeof(int)) ;
-    	myassert(read_res !=0 , " " ) ;
-    	printf("accuse de worker %d \n" , accuse) ;
-    	
+        int order = MW_ORDER_PRINT;
+        write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1," ") ;
+        int accuse;
+        int read_res ;
+        read_res = read(data->fds_To_Master[0], &accuse, sizeof(int)) ;
+        myassert(read_res !=0, " " ) ;
+        printf("accuse de worker %d \n", accuse) ;
+
     }
-    
-         int rep = CM_ANSWER_PRINT_OK ;
-    	write_res = write(data->openRes , &rep , sizeof(int)) ;
-    	myassert(write_res !=0 , " " ) ;
-    
+
+    int rep = CM_ANSWER_PRINT_OK ;
+    write_res = write(data->openRes, &rep, sizeof(int)) ;
+    myassert(write_res !=0, " " ) ;
+
     // - envoyer au premier worker ordre print (cf. master_worker.h)
     // - recevoir accusé de réception venant du premier worker (cf. master_worker.h)
     //   note : ce sont les workers qui font les affichages
@@ -592,52 +592,52 @@ void loop(Data *data)
         printf("on est dans la boucle\n") ;
 
 
-        int open_CTM = open(FD_CTOM , O_RDONLY) ;
-                myassert(open_CTM != -1 , " ") ;
-        int open_MTC = open(FD_MTOC , O_WRONLY) ;
-                myassert(open_MTC != -1 , " ") ;
-     
+        int open_CTM = open(FD_CTOM, O_RDONLY) ;
+        myassert(open_CTM != -1, " ") ;
+        int open_MTC = open(FD_MTOC, O_WRONLY) ;
+        myassert(open_MTC != -1, " ") ;
 
-         //TODO pour que ça ne boucle pas, mais recevoir l'ordre du client
-        int order_recieve = read(open_CTM , &(data->order) , sizeof(int)) ;
-        myassert(order_recieve != -1 , " " ) ;
+
+        //TODO pour que ça ne boucle pas, mais recevoir l'ordre du client
+        int order_recieve = read(open_CTM, &(data->order), sizeof(int)) ;
+        myassert(order_recieve != -1, " " ) ;
         data->openRes = open_MTC ;
-        data->fdFromClient = open_CTM ; 
+        data->fdFromClient = open_CTM ;
         switch(data->order)
         {
-          case CM_ORDER_STOP:
+        case CM_ORDER_STOP:
             orderStop(data);
             end = true;
             break;
-          case CM_ORDER_HOW_MANY:
+        case CM_ORDER_HOW_MANY:
             orderHowMany(data);
             break;
-          case CM_ORDER_MINIMUM:
+        case CM_ORDER_MINIMUM:
             orderMinimum(data);
             break;
-          case CM_ORDER_MAXIMUM:
+        case CM_ORDER_MAXIMUM:
             orderMaximum(data);
             break;
-          case CM_ORDER_EXIST:
-          order_recieve = read(open_CTM , &(data->elt) , sizeof(float)) ;
-    		myassert(order_recieve != -1 , " " ) ;
+        case CM_ORDER_EXIST:
+            order_recieve = read(open_CTM, &(data->elt), sizeof(float)) ;
+            myassert(order_recieve != -1, " " ) ;
             orderExist(data);
             break;
-          case CM_ORDER_SUM:
+        case CM_ORDER_SUM:
             orderSum(data);
             break;
-          case CM_ORDER_INSERT:
-          	 order_recieve = read(open_CTM , &(data->elt) , sizeof(float)) ;
-    		 myassert(order_recieve != -1 , " " ) ;
+        case CM_ORDER_INSERT:
+            order_recieve = read(open_CTM, &(data->elt), sizeof(float)) ;
+            myassert(order_recieve != -1, " " ) ;
             orderInsert(data);
             break;
-          case CM_ORDER_INSERT_MANY:
+        case CM_ORDER_INSERT_MANY:
             orderInsertMany(data);
             break;
-          case CM_ORDER_PRINT:
+        case CM_ORDER_PRINT:
             orderPrint(data);
             break;
-          default:
+        default:
             myassert(false, "ordre inconnu");
             exit(EXIT_FAILURE);
             break;
@@ -646,10 +646,10 @@ void loop(Data *data)
         //TODO fermer les tubes nommés
         //     il est important d'ouvrir et fermer les tubes nommés à chaque itération
         //     voyez-vous pourquoi ?
-       int close_res =  close(open_MTC) ;
-        myassert(close_res != -1 ," ") ;
+        int close_res =  close(open_MTC) ;
+        myassert(close_res != -1," ") ;
         close_res =close(open_CTM) ;
-                myassert(close_res != -1 ," ") ;
+        myassert(close_res != -1," ") ;
 
         //TODO attendre ordre du client avant de continuer (sémaphore pour une précédence)
         entrerSC(data->precedence) ;
@@ -678,43 +678,43 @@ int main(int argc, char * argv[])
     //TODO
     // - création des sémaphores
     // - création des tubes nommés
-    int mutexid = my_semget(1 , MUTEX , PROJID) ;
-    int secondMutex = my_semget(0 , MONFICHIER , PROJID2) ;
+    int mutexid = my_semget(1, MUTEX, PROJID) ;
+    int secondMutex = my_semget(0, MONFICHIER, PROJID2) ;
     data.precedence = secondMutex ;
-    int Master_To_Client = mkfifo(FD_MTOC , 0644) ;
+    int Master_To_Client = mkfifo(FD_MTOC, 0644) ;
     assert(Master_To_Client !=-1) ;
-    int Client_To_Master = mkfifo(FD_CTOM , 0644) ;
+    int Client_To_Master = mkfifo(FD_CTOM, 0644) ;
     assert(Client_To_Master !=-1) ;
-    
-    
- 
+
+
+
 
     //END TODO
-int fdWorker_To_Master[2];
+    int fdWorker_To_Master[2];
 
-int fds_To_Master[2] ;
-int fds_To_Worker[2] ;  
-pipe(fds_To_Master);
-pipe(fdWorker_To_Master) ;
-pipe(fds_To_Worker) ;
-
-    
+    int fds_To_Master[2] ;
+    int fds_To_Worker[2] ;
+    pipe(fds_To_Master);
+    pipe(fdWorker_To_Master) ;
+    pipe(fds_To_Worker) ;
 
 
-data.fds_To_Master[0] = fds_To_Master[0];
-data.fds_To_Master[1] = fds_To_Master[1];
-data.fds_To_Worker[0] = fds_To_Worker[0];
-data.fds_To_Worker[1] = fds_To_Worker[1];
 
-data.fdWorker_To_Master[0] = fdWorker_To_Master[0];
-data.fdWorker_To_Master[1] = fdWorker_To_Master[1];
+
+    data.fds_To_Master[0] = fds_To_Master[0];
+    data.fds_To_Master[1] = fds_To_Master[1];
+    data.fds_To_Worker[0] = fds_To_Worker[0];
+    data.fds_To_Worker[1] = fds_To_Worker[1];
+
+    data.fdWorker_To_Master[0] = fdWorker_To_Master[0];
+    data.fdWorker_To_Master[1] = fdWorker_To_Master[1];
     loop(&data);
 
 
-   unlink(FD_MTOC);
-   unlink(FD_CTOM);
-   my_destroy(mutexid) ;
-   my_destroy(data.precedence) ;
+    unlink(FD_MTOC);
+    unlink(FD_CTOM);
+    my_destroy(mutexid) ;
+    my_destroy(data.precedence) ;
 
 
     //TODO destruction des tubes nommés, des sémaphores, ...
@@ -722,3 +722,4 @@ data.fdWorker_To_Master[1] = fdWorker_To_Master[1];
     TRACE0("[master] terminaison\n");
     return EXIT_SUCCESS;
 }
+

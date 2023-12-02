@@ -38,7 +38,7 @@ typedef struct
     bool fg;
     bool fd;
     float sumRes ;
-   
+
 
 } Data;
 
@@ -67,7 +67,7 @@ static void parseArgs(int argc, char * argv[], Data *data)
         usage(argv[0], "Nombre d'arguments incorrect");
 
     //TODO initialisation data
-    
+
 
     //TODO (à enlever) comment récupérer les arguments de la ligne de commande
 
@@ -75,10 +75,10 @@ static void parseArgs(int argc, char * argv[], Data *data)
     int fdIn = strtol(argv[2], NULL, 10);
     int fdOut = strtol(argv[3], NULL, 10);
     int fdToMaster = strtol(argv[4], NULL, 10);
-   // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
+    // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
     //int reponse = 1000 ;
     //int write_res = write(fdToMaster , &reponse , sizeof(int)) ;
-   // myassert(write_res !=-1 , "") ;
+    // myassert(write_res !=-1 , "") ;
     data->elt = elt ;
     data->fdIn = fdIn ;
     data->fdOut = fdOut ;
@@ -86,42 +86,42 @@ static void parseArgs(int argc, char * argv[], Data *data)
     data->cardinality+=1 ;
 
 
-    
- 
-    
-    
+
+
+
+
     //END TODO
 }
 
 
 /************************************************************************
- * Stop 
+ * Stop
  ************************************************************************/
 void stopAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(),  data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
- 	int write_res ;
+    int write_res ;
     //TODO
     if(data->fd ==true)
     {
-    	  write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
-		  myassert(write_res != -1 , "" ) ;
-		  wait(NULL) ;
+        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        wait(NULL) ;
 
     }
-    
+
     if(data->fg ==true)
     {
-    	  write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
-		  myassert(write_res != -1 , "" ) ;
-		  wait(NULL) ;
+        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        wait(NULL) ;
     }
-    
-      
-    
-    
-    
+
+
+
+
+
     // - traiter les cas où les fils n'existent pas
     // - envoyer au worker gauche ordre de fin (cf. master_worker.h)
     // - envoyer au worker droit ordre de fin (cf. master_worker.h)
@@ -143,39 +143,39 @@ static void howManyAction(Data *data)
     int nb_all_elements = 0 ;
     if(data->fd == true)
     {
-    
-    write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
-	myassert(write_res != -1 , "" ) ;
-	read_res = read(data->fdFilsD_To_Parent[0] , &nb_elements , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	read_res = read(data->fdFilsD_To_Parent[0] , &nb_all_elements , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	
+
+        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &nb_elements, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &nb_all_elements, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+
     }
-    
-    
+
+
     if(data->fg == true)
     {
-    
-    write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
-	myassert(write_res != -1 , "" ) ;
-  
-	read_res = read(data->fdFilsG_To_Parent[0] , &nb_elements , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	read_res = read(data->fdFilsG_To_Parent[0] , &nb_all_elements , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	
+
+        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+
+        read_res = read(data->fdFilsG_To_Parent[0], &nb_elements, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+        read_res = read(data->fdFilsG_To_Parent[0], &nb_all_elements, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+
     }
-    
+
     nb_elements ++ ;
     nb_all_elements+= data->cardinality ;
-    printf("le nb d'elements (%d , %d) \n " , nb_elements , nb_all_elements) ;
-    
-    write_res = write(data->fdOut , &nb_elements , sizeof(int)) ;
-    write_res = write(data->fdOut , &nb_all_elements , sizeof(int)) ;
-    
-    
-    
+    printf("le nb d'elements (%d , %d) \n ", nb_elements, nb_all_elements) ;
+
+    write_res = write(data->fdOut, &nb_elements, sizeof(int)) ;
+    write_res = write(data->fdOut, &nb_all_elements, sizeof(int)) ;
+
+
+
 
     //TODO
     // - traiter les cas où les fils n'existent pas
@@ -196,23 +196,23 @@ static void minimumAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre minimum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
-  	int write_res ;
-	if(data->fg==false)
-	{
-				int accuse = MW_ANSWER_MINIMUM ;
-				write_res = write(data->fdToMaster , &accuse , sizeof(float)) ;
-				myassert(write_res != -1 , "" ) ;
-				float res = data->elt ;
-				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
-				myassert(write_res != -1 , "" ) ;
-	
-	}
-	else
-	{
-		 write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
-		  myassert(write_res != -1 , "" ) ;
-	}
-	
+    int write_res ;
+    if(data->fg==false)
+    {
+        int accuse = MW_ANSWER_MINIMUM ;
+        write_res = write(data->fdToMaster, &accuse, sizeof(float)) ;
+        myassert(write_res != -1, "" ) ;
+        float res = data->elt ;
+        write_res = write(data->fdToMaster, &res, sizeof(float)) ;
+        myassert(write_res != -1, "" ) ;
+
+    }
+    else
+    {
+        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+    }
+
     //TODO
     // - si le fils gauche n'existe pas (on est sur le minimum)
     //       . envoyer l'accusé de réception au master (cf. master_worker.h)
@@ -232,19 +232,19 @@ static void maximumAction(Data *data)
     TRACE3("    [worker (%d, %d) {%g}] : ordre maximum\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int write_res ;
-	if(data->fd==false)
-	{
+    if(data->fd==false)
+    {
 
-				float res = data->elt ;
-				 write_res = write(data->fdToMaster , &res , sizeof(float)) ;
-				myassert(write_res != -1 , "" ) ;
-	
-	}
-	else
-	{
-		 write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
-		  myassert(write_res != -1 , "" ) ;
-	}
+        float res = data->elt ;
+        write_res = write(data->fdToMaster, &res, sizeof(float)) ;
+        myassert(write_res != -1, "" ) ;
+
+    }
+    else
+    {
+        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+    }
     //TODO
     // cf. explications pour le minimum
     //END TODO
@@ -262,66 +262,66 @@ static void existAction(Data *data)
     //TODO
     float elt ;
 
-    int read_res = read(data->fdIn , &elt , sizeof(float)) ;
-    printf("j'ai sa comme element a chercher %f\n" , elt);
-    myassert(read_res != -1 , " ") ;
+    int read_res = read(data->fdIn, &elt, sizeof(float)) ;
+    printf("j'ai sa comme element a chercher %f\n", elt);
+    myassert(read_res != -1, " ") ;
     if(elt == data->elt)
     {
         printf("je passe par le premier if ou pas \n") ;
-    	int accuse = MW_ANSWER_EXIST_YES ;
-    	int write_res = write(data->fdToMaster , &accuse , sizeof(int));
-    		myassert(write_res != -1 , " ") ;
-    		int card = data->cardinality ;
-            write_res =write(data->fdToMaster , &card , sizeof(int));
-            myassert(write_res != -1 , " ") ;
+        int accuse = MW_ANSWER_EXIST_YES ;
+        int write_res = write(data->fdToMaster, &accuse, sizeof(int));
+        myassert(write_res != -1, " ") ;
+        int card = data->cardinality ;
+        write_res =write(data->fdToMaster, &card, sizeof(int));
+        myassert(write_res != -1, " ") ;
     }
-    
+
     else
     {
-    	int order = data->order ;
-    	int write_res ;
-    	if(elt < data->elt) 
-    	{
-   		 if(data->fg==true)
-    		{
-    	write_res = write(data->fdsG[1] , &(order) , sizeof(int)) ;
-		myassert(write_res != -1 , "" ) ;
-		write_res = write(data->fdsG[1] , &(elt) , sizeof(float)) ;
-		myassert(write_res != -1 , "" ) ;
-    		}
-    	 else
-    	 {
-    	int accuse = MW_ANSWER_EXIST_NO;
-    	 write_res = write(data->fdToMaster , &accuse , sizeof(int));
-    	 }
-    	 
-    	 }
-       	if(elt > data->elt) 
-       	{
-       	 if(data->fd==true)
-    		{
-    	write_res = write(data->fdsD[1] , &(order) , sizeof(int)) ;
-		myassert(write_res != -1 , "" ) ;
-		write_res = write(data->fdsD[1] , &(elt) , sizeof(float)) ;
-		myassert(write_res != -1 , "" ) ;
-    		}
-    	 else
-    	 {
-    	int accuse = MW_ANSWER_EXIST_NO;
-    	 write_res = write(data->fdToMaster , &accuse , sizeof(int));
-    	 }
-       	
-    
-    		}
-    }
-    
-    
+        int order = data->order ;
+        int write_res ;
+        if(elt < data->elt)
+        {
+            if(data->fg==true)
+            {
+                write_res = write(data->fdsG[1], &(order), sizeof(int)) ;
+                myassert(write_res != -1, "" ) ;
+                write_res = write(data->fdsG[1], &(elt), sizeof(float)) ;
+                myassert(write_res != -1, "" ) ;
+            }
+            else
+            {
+                int accuse = MW_ANSWER_EXIST_NO;
+                write_res = write(data->fdToMaster, &accuse, sizeof(int));
+            }
 
-    
-    
-    
-    
-    
+        }
+        if(elt > data->elt)
+        {
+            if(data->fd==true)
+            {
+                write_res = write(data->fdsD[1], &(order), sizeof(int)) ;
+                myassert(write_res != -1, "" ) ;
+                write_res = write(data->fdsD[1], &(elt), sizeof(float)) ;
+                myassert(write_res != -1, "" ) ;
+            }
+            else
+            {
+                int accuse = MW_ANSWER_EXIST_NO;
+                write_res = write(data->fdToMaster, &accuse, sizeof(int));
+            }
+
+
+        }
+    }
+
+
+
+
+
+
+
+
     // - recevoir l'élément à tester en provenance du père
     // - si élément courant == élément à tester
     //       . envoyer au master l'accusé de réception de réussite (cf. master_worker.h)
@@ -353,37 +353,37 @@ static void sumAction(Data *data)
     int read_res ;
     if(data->fd == true)
     {
-    
-    write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
-		  myassert(write_res != -1 , "" ) ;
-		  float resd ;
-	read_res = read(data->fdFilsD_To_Parent[0] , &(resd) , sizeof(float)) ;
-			  myassert(read_res != -1 , "" ) ;
-			  printf("la reponse de mon fils d %f \n" ,resd) ;
-	data->sumRes+=resd;
-	
+
+        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        float resd ;
+        read_res = read(data->fdFilsD_To_Parent[0], &(resd), sizeof(float)) ;
+        myassert(read_res != -1, "" ) ;
+        printf("la reponse de mon fils d %f \n",resd) ;
+        data->sumRes+=resd;
+
     }
-    
+
     if(data->fg==true)
     {
-    	write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
-		myassert(write_res != -1 , "" ) ;
-		float resg ;
-		read_res = read(data->fdFilsG_To_Parent[0] , &(resg) , sizeof(float)) ;
-					  myassert(read_res != -1 , "" ) ;
-					  			  printf("la reponse de mon fils g %f \n" ,resg) ;
-		data->sumRes+=resg;
-    
-    }
-    
-   
-    	data->sumRes+=(data->elt)*data->cardinality;
-    				  printf("j'ai envoyey cette sum %f \n" ,data->sumRes) ;
-    	write_res = write(data->fdOut , &(data->sumRes) , sizeof(float)) ;
-    						  myassert(write_res != -1 , "" ) ;
-    
+        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        float resg ;
+        read_res = read(data->fdFilsG_To_Parent[0], &(resg), sizeof(float)) ;
+        myassert(read_res != -1, "" ) ;
+        printf("la reponse de mon fils g %f \n",resg) ;
+        data->sumRes+=resg;
 
-       
+    }
+
+
+    data->sumRes+=(data->elt)*data->cardinality;
+    printf("j'ai envoyey cette sum %f \n",data->sumRes) ;
+    write_res = write(data->fdOut, &(data->sumRes), sizeof(float)) ;
+    myassert(write_res != -1, "" ) ;
+
+
+
 
     //TODO
     // - traiter les cas où les fils n'existent pas
@@ -407,118 +407,118 @@ static void insertAction(Data *data)
 
     //TODO
     // - recevoir l'élément à insérer en provenance du père
- float elt ;
- int read_res = read(data->fdIn , &elt , sizeof(float)) ;
- myassert(read_res != -1 , " ") ;
- if(elt ==data->elt)
- {
- data->cardinality+=1 ;
- }
- 
- else 
- {
- 		char stringfds1[50];
-	    char stringfds2[50] ;
-		char stringElement[50] ;
-		char fdWorker[50] ;
-		if(elt >=data->elt )
-	{
-			
-			if(data->fd == false)
-			{
-			
-	    data->fd = true ;
-		int res = fork() ;
+    float elt ;
+    int read_res = read(data->fdIn, &elt, sizeof(float)) ;
+    myassert(read_res != -1, " ") ;
+    if(elt ==data->elt)
+    {
+        data->cardinality+=1 ;
+    }
 
-				if(res ==0) 
-			
-				{
-					
-					sprintf(stringfds1, "%d", data->fdsD[0]);
-   					sprintf(stringfds2, "%d", data->fdFilsD_To_Parent[1]);
-    				sprintf(stringElement, "%f", elt);
-    				sprintf(fdWorker, "%d", data->fdToMaster);
-				
+    else
+    {
+        char stringfds1[50];
+        char stringfds2[50] ;
+        char stringElement[50] ;
+        char fdWorker[50] ;
+        if(elt >=data->elt )
+        {
 
-    			   // printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
-					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
-					char *path = "./worker" ;
-					   //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
-					execv(path , argv) ;
-	
+            if(data->fd == false)
+            {
 
-					}
-					
-		
-	
-					}
-					
-					
-		  		else
-		  		
-		  		{
-		  		  // printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
-		  					int order = data->order ;
-		  					write(data->fdsD[1] , &order , sizeof(int)) ;
-		  					write(data->fdsD[1] , &elt , sizeof(int)) ;
-		  				
-		  		
-		  		}
-					
-					
-							}
-			else if(elt <= data->elt)
-			{
-			
-						if(data->fg== false)
-			{
-			
-								data->fg = true ;
-		int res = fork() ;
+                data->fd = true ;
+                int res = fork() ;
 
-				if(res ==0) 
-			
-				{
-	
-					sprintf(stringfds1, "%d", data->fdsG[0]);
-   					sprintf(stringfds2, "%d", data->fdFilsG_To_Parent[1]);
-    				sprintf(stringElement, "%f", elt);
-    				sprintf(fdWorker, "%d", data->fdToMaster);
-				
+                if(res ==0)
 
-    			   // printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
-					char * argv[] = {"./worker" , stringElement , stringfds1 , stringfds2 , fdWorker ,  NULL } ;
-					char *path = "./worker" ;
+                {
+
+                    sprintf(stringfds1, "%d", data->fdsD[0]);
+                    sprintf(stringfds2, "%d", data->fdFilsD_To_Parent[1]);
+                    sprintf(stringElement, "%f", elt);
+                    sprintf(fdWorker, "%d", data->fdToMaster);
 
 
-					execv(path , argv) ;
-				
+                    // printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+                    char * argv[] = {"./worker", stringElement, stringfds1, stringfds2, fdWorker,  NULL } ;
+                    char *path = "./worker" ;
+                    //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
+                    execv(path, argv) ;
 
-					}
-					
-			
-				
-			
 
-					}
-					
-					else
-					{
-					
-					 
-					 
-					
-					
-						int order = data->order ;
-		  					write(data->fdsG[1] , &order , sizeof(int)) ;
-		  					write(data->fdsG[1] , &elt , sizeof(int)) ;
-					
-					}
-			
-			}
+                }
 
-}
-		
+
+
+            }
+
+
+            else
+
+            {
+                // printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+                int order = data->order ;
+                write(data->fdsD[1], &order, sizeof(int)) ;
+                write(data->fdsD[1], &elt, sizeof(int)) ;
+
+
+            }
+
+
+        }
+        else if(elt <= data->elt)
+        {
+
+            if(data->fg== false)
+            {
+
+                data->fg = true ;
+                int res = fork() ;
+
+                if(res ==0)
+
+                {
+
+                    sprintf(stringfds1, "%d", data->fdsG[0]);
+                    sprintf(stringfds2, "%d", data->fdFilsG_To_Parent[1]);
+                    sprintf(stringElement, "%f", elt);
+                    sprintf(fdWorker, "%d", data->fdToMaster);
+
+
+                    // printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+                    char * argv[] = {"./worker", stringElement, stringfds1, stringfds2, fdWorker,  NULL } ;
+                    char *path = "./worker" ;
+
+
+                    execv(path, argv) ;
+
+
+                }
+
+
+
+
+
+            }
+
+            else
+            {
+
+
+
+
+
+                int order = data->order ;
+                write(data->fdsG[1], &order, sizeof(int)) ;
+                write(data->fdsG[1], &elt, sizeof(int)) ;
+
+            }
+
+        }
+
+    }
+
     // - si élément courant == élément à tester
     //       . incrémenter la cardinalité courante
     //       . envoyer au master l'accusé de réception (cf. master_worker.h)
@@ -550,39 +550,39 @@ static void printAction(Data *data)
     int accuse ;
     int write_res;
     int read_res;
-    
+
     if(data->fg == true)
     {
-    
-    write_res = write(data->fdsG[1] , &(data->order) , sizeof(int)) ;
-	myassert(write_res != -1 , "" ) ;
-  
-	read_res = read(data->fdFilsG_To_Parent[0] , &accuse , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	
-    }
-    
-    printf("j'ai l'element %f , de cardinalite %d\n " , data->elt , data->cardinality) ;
-   
 
-    
-     if(data->fd == true)
+        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+
+        read_res = read(data->fdFilsG_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+
+    }
+
+    printf("j'ai l'element %f , de cardinalite %d\n ", data->elt, data->cardinality) ;
+
+
+
+    if(data->fd == true)
     {
-    
-   write_res = write(data->fdsD[1] , &(data->order) , sizeof(int)) ;
-	myassert(write_res != -1 , "" ) ;
-	read_res = read(data->fdFilsD_To_Parent[0] , &accuse , sizeof(int)) ;
-	myassert(read_res != -1 , "" ) ;
-	
-    }
-    
-     accuse =MW_ANSWER_PRINT ;
-    write_res = write(data->fdOut , &accuse , sizeof(int)) ;
-     myassert(write_res != -1 , "" ) ;
 
-    
-   
-    
+        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+        myassert(write_res != -1, "" ) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
+
+    }
+
+    accuse =MW_ANSWER_PRINT ;
+    write_res = write(data->fdOut, &accuse, sizeof(int)) ;
+    myassert(write_res != -1, "" ) ;
+
+
+
+
     //TODO
     // - si le fils gauche existe
     //       . envoyer ordre print (cf. master_worker.h)
@@ -607,40 +607,40 @@ void loop(Data *data)
     {
 
         int order ;
- //TODO pour que ça ne boucle pas, mais recevoir l'ordre du père
-        int read_res = read(data->fdIn , &order , sizeof(int)) ;
-        myassert(read_res != -1 , " ") ;
-        	data->order = order ;
-        	printf("je suis worker et voila l'ordre %d \n" , order ) ;
-        	
+//TODO pour que ça ne boucle pas, mais recevoir l'ordre du père
+        int read_res = read(data->fdIn, &order, sizeof(int)) ;
+        myassert(read_res != -1, " ") ;
+        data->order = order ;
+        printf("je suis worker et voila l'ordre %d \n", order ) ;
+
         switch(order)
         {
-          case MW_ORDER_STOP:
+        case MW_ORDER_STOP:
             stopAction(data);
             end = true;
             break;
-          case MW_ORDER_HOW_MANY:
+        case MW_ORDER_HOW_MANY:
             howManyAction(data);
             break;
-          case MW_ORDER_MINIMUM:
+        case MW_ORDER_MINIMUM:
             minimumAction(data);
             break;
-          case MW_ORDER_MAXIMUM:
+        case MW_ORDER_MAXIMUM:
             maximumAction(data);
             break;
-          case MW_ORDER_EXIST:
+        case MW_ORDER_EXIST:
             existAction(data);
             break;
-          case MW_ORDER_SUM:
+        case MW_ORDER_SUM:
             sumAction(data);
             break;
-          case MW_ORDER_INSERT:
+        case MW_ORDER_INSERT:
             insertAction(data);
             break;
-          case MW_ORDER_PRINT:
+        case MW_ORDER_PRINT:
             printAction(data);
             break;
-          default:
+        default:
             myassert(false, "ordre inconnu");
             exit(EXIT_FAILURE);
             break;
@@ -663,38 +663,39 @@ int main(int argc, char * argv[])
 
     //TODO envoyer au master l'accusé de réception d'insertion (cf. master_worker.h)
     //TODO note : en effet si je suis créé c'est qu'on vient d'insérer un élément : moi
-    
-int fdsG[2];
-int fdsD[2];
-int fdFilsG_To_Parent[2];
-int fdFilsD_To_Parent[2];
 
-pipe(fdsG);
-pipe(fdsD);
-pipe(fdFilsG_To_Parent);
-pipe(fdFilsD_To_Parent);
+    int fdsG[2];
+    int fdsD[2];
+    int fdFilsG_To_Parent[2];
+    int fdFilsD_To_Parent[2];
+
+    pipe(fdsG);
+    pipe(fdsD);
+    pipe(fdFilsG_To_Parent);
+    pipe(fdFilsD_To_Parent);
 
 
-data.fdsG[0] = fdsG[0];
-data.fdsG[1] = fdsG[1];
+    data.fdsG[0] = fdsG[0];
+    data.fdsG[1] = fdsG[1];
 
-data.fdsD[0] = fdsD[0];
-data.fdsD[1] = fdsD[1];
+    data.fdsD[0] = fdsD[0];
+    data.fdsD[1] = fdsD[1];
 
-data.fdFilsG_To_Parent[0] = fdFilsG_To_Parent[0];
-data.fdFilsG_To_Parent[1] = fdFilsG_To_Parent[1];
+    data.fdFilsG_To_Parent[0] = fdFilsG_To_Parent[0];
+    data.fdFilsG_To_Parent[1] = fdFilsG_To_Parent[1];
 
-data.fdFilsD_To_Parent[0] = fdFilsD_To_Parent[0];
-data.fdFilsD_To_Parent[1] = fdFilsD_To_Parent[1];
-data.fd = false ;
-data.fg = false ;
+    data.fdFilsD_To_Parent[0] = fdFilsD_To_Parent[0];
+    data.fdFilsD_To_Parent[1] = fdFilsD_To_Parent[1];
+    data.fd = false ;
+    data.fg = false ;
     parseArgs(argc, argv, &data);
- loop(&data);
+    loop(&data);
 
     //TODO fermer les tubes
-    
- 
+
+
 
     TRACE3("    [worker (actuelpid : %d, perepid :%d) {%f}] : fin worker\n", getpid(), getppid(), data.elt /*TODO élément*/);
     return EXIT_SUCCESS;
 }
+

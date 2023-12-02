@@ -15,7 +15,7 @@
 
 #include "client_master.h"
 #include "master_worker.h"
-#include "string.h"  
+#include "string.h"
 #include <pthread.h>
 
 #include <sys/ipc.h>
@@ -47,12 +47,13 @@
  * - les infos pour effectuer le travail (cf. ligne de commande)
  *   (note : une union permettrait d'optimiser la place mémoire)
  ************************************************************************/
-typedef struct {
+typedef struct
+{
     // communication avec le master
     //TODO
-   int openRes ;
-   int accuse ;
-    
+    int openRes ;
+    int accuse ;
+
     // infos pour le travail à faire (récupérées sur la ligne de commande)
     int order;     // ordre de l'utilisateur (cf. CM_ORDER_* dans client_master.h)
     float elt;     // pour CM_ORDER_EXIST, CM_ORDER_INSERT, CM_ORDER_LOCAL
@@ -92,7 +93,7 @@ static void usage(const char *exeName, const char *message)
     fprintf(stderr, "          affichage trié (dans la console du master)\n");
     fprintf(stderr, "   $ %s " TK_LOCAL " <nbThreads> <elt> <nb> <min> <max>\n", exeName);
     fprintf(stderr, "          combien d'exemplaires de <elt> dans <nb> éléments (dans [<min>,<max>[)\n"
-                    "          aléatoires avec <nbThreads> threads\n");
+            "          aléatoires avec <nbThreads> threads\n");
 
     if (message != NULL)
         fprintf(stderr, "message :\n    %s\n", message);
@@ -196,7 +197,7 @@ static void entrerSC(int semId)
 {
     struct sembuf operation = {0, -1, 0};
     int ret = semop(semId, &operation, 1);
-    myassert(ret != -1 , " ");
+    myassert(ret != -1, " ");
 }
 
 //-----------------------------------------------------------------
@@ -206,16 +207,16 @@ static void sortirSC(int semId)
     // TODO
     struct sembuf operation = {0, +1, 0};
     int ret = semop(semId, &operation, 1);
-    myassert(ret != -1 , " ");
+    myassert(ret != -1, " ");
 }
 
-static int my_semget(char * kEY , int projectID)
+static int my_semget(char * kEY, int projectID)
 {
     // TODO
     key_t cle = ftok(kEY, projectID);
-	myassert(cle != -1, " ");
+    myassert(cle != -1, " ");
     int semId = semget(cle, 1, 0);
-	myassert(semId != -1 ," ");
+    myassert(semId != -1," ");
     return semId;
 }
 
@@ -225,14 +226,15 @@ static int my_semget(char * kEY , int projectID)
  ************************************************************************/
 //TODO Une structure pour les arguments à passer à un thread (aucune variable globale autorisée)
 
-typedef struct {
+typedef struct
+{
 
-  float elt ;
-  int indice ;
-  float * tab ;
-  int *res ;
-  int size ;
-  pthread_mutex_t *mutex ;
+    float elt ;
+    int indice ;
+    float * tab ;
+    int *res ;
+    int size ;
+    pthread_mutex_t *mutex ;
 } thData;
 //TODO
 // Code commun à tous les threads
@@ -246,29 +248,29 @@ typedef struct {
 void * thread_function(void * arg)
 {
 
-	thData * thdata = (thData*) arg ;
-	int indice = thdata->indice ;
-			//printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
-	for(int i = indice; i < indice + thdata->size ; i++)
-	{
-			//printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
-		if (thdata->elt == thdata->tab[i])
-		{
-		
+    thData * thdata = (thData*) arg ;
+    int indice = thdata->indice ;
+    //printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
+    for(int i = indice; i < indice + thdata->size ; i++)
+    {
+        //printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
+        if (thdata->elt == thdata->tab[i])
+        {
 
-		pthread_mutex_lock(thdata->mutex) ;
-		
-			*(thdata->res)+= 1 ;
-	    pthread_mutex_unlock(thdata->mutex) ;
-		
-		}
 
-	}
-	
-	return NULL ;
-    	
-    	
-	
+            pthread_mutex_lock(thdata->mutex) ;
+
+            *(thdata->res)+= 1 ;
+            pthread_mutex_unlock(thdata->mutex) ;
+
+        }
+
+    }
+
+    return NULL ;
+
+
+
 }
 
 void lauchThreads(const Data *data)
@@ -282,61 +284,61 @@ void lauchThreads(const Data *data)
 
     //TODO lancement des threads
     pthread_t th[data->nbThreads] ;
-    
+
     int range = data->nb / data->nbThreads ;
     int rest_range = data->nb % data->nbThreads ;
     int avance = 0 ;
     int indice ;
     int premierindice = 0 ;
     thData ** d = (thData**)malloc(sizeof(thData*)*data->nbThreads) ;
-     for(int i =0 ; i <data->nbThreads  ; i++)
+    for(int i =0 ; i <data->nbThreads  ; i++)
     {
-    
-    	d[i] = (thData*)malloc(sizeof(thData)) ;
-    	d[i]->elt = data->elt ;
-    	d[i]->size = range;
-    	d[i]->res = &result ;
-    	d[i]->mutex = &mutex ;
-    	if(rest_range > 0 )
-    	{
-    		if(premierindice==0)
-    		{
-    		indice = (range * i) + avance  ;
-    		premierindice ++ ;
-    		}
-    		else
-    		{
-    		indice = (range * i) + avance  ;
-    		d[i]->indice = indice ;
-    		d[i]->tab = tab ;
-    		rest_range -- ;
-    		avance ++ ;
-    		}
-    	}
-    	else
-    	{
-    	indice = (range * i) + avance  ;
-    	d[i]->tab = tab ;
-    	d[i]->indice = indice ;
-    
-    	}
-    	//printf("l'indice qu'on a utiliser %d \n" , indice) ;
-   		pthread_create(&(th[i]) , NULL , &thread_function , d[i]) ;
-		//printf("l'indice avant d'envoyer %d , et le size %d\n" , d[i]->indice , d[i]->size) ;
 
-   		
-	
-		
-	}
-	
-	for(int i =0 ; i < data->nbThreads ; i++)
+        d[i] = (thData*)malloc(sizeof(thData)) ;
+        d[i]->elt = data->elt ;
+        d[i]->size = range;
+        d[i]->res = &result ;
+        d[i]->mutex = &mutex ;
+        if(rest_range > 0 )
+        {
+            if(premierindice==0)
+            {
+                indice = (range * i) + avance  ;
+                premierindice ++ ;
+            }
+            else
+            {
+                indice = (range * i) + avance  ;
+                d[i]->indice = indice ;
+                d[i]->tab = tab ;
+                rest_range -- ;
+                avance ++ ;
+            }
+        }
+        else
+        {
+            indice = (range * i) + avance  ;
+            d[i]->tab = tab ;
+            d[i]->indice = indice ;
+
+        }
+        //printf("l'indice qu'on a utiliser %d \n" , indice) ;
+        pthread_create(&(th[i]), NULL, &thread_function, d[i]) ;
+        //printf("l'indice avant d'envoyer %d , et le size %d\n" , d[i]->indice , d[i]->size) ;
+
+
+
+
+    }
+
+    for(int i =0 ; i < data->nbThreads ; i++)
     {
-    	pthread_join(th[i] ,NULL)  ;
+        pthread_join(th[i],NULL)  ;
 
-    			
-	}
-	
-	
+
+    }
+
+
 
     //TODO attente de la fin des threads
 
@@ -367,9 +369,9 @@ void lauchThreads(const Data *data)
         printf("=> PB ! le résultat calculé par les threads est incorrect\n");
 
     //TODO libération des ressources
-        pthread_mutex_destroy(&mutex);
-        free(tab) ;
-       
+    pthread_mutex_destroy(&mutex);
+    free(tab) ;
+
 }
 
 
@@ -382,44 +384,44 @@ void sendData(const Data *data)
 
 
     //TODO
-    
- 
-   int order = data->order ;
-   int write_res = write(data->openRes , &(order), sizeof(int)) ;
-    myassert(write_res != -1 , " ") ;
-    printf("L'order est %d \n" , order) ;
-    
+
+
+    int order = data->order ;
+    int write_res = write(data->openRes, &(order), sizeof(int)) ;
+    myassert(write_res != -1, " ") ;
+    printf("L'order est %d \n", order) ;
+
     if(order == CM_ORDER_EXIST)
     {
-    write_res = write(data->openRes , &(data->elt), sizeof(float)) ;
-    myassert(write_res != -1 , " ") ;
+        write_res = write(data->openRes, &(data->elt), sizeof(float)) ;
+        myassert(write_res != -1, " ") ;
     }
 
-    if(order == CM_ORDER_INSERT) 
+    if(order == CM_ORDER_INSERT)
     {
-         printf("l'elt %f en client \n" , data->elt) ;
+        printf("l'elt %f en client \n", data->elt) ;
         float num = data->elt ;
-    	write_res = write(data->openRes, &(num), sizeof(float)) ;
-    	myassert(write_res != -1 , " ") ;
+        write_res = write(data->openRes, &(num), sizeof(float)) ;
+        myassert(write_res != -1, " ") ;
     }
-    
+
     if(order == CM_ORDER_INSERT_MANY)
     {
 
-            float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
-            int taille = data->nb ;
-            float val ;
-            write_res = write(data->openRes, &(taille), sizeof(int)) ;
-            for(int i =0 ; i< taille ; i ++)
-            {
-                write(data->openRes , &(tab[i]) , sizeof(float)) ; 
-            
-            }
-           
+        float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
+        int taille = data->nb ;
+        float val ;
+        write_res = write(data->openRes, &(taille), sizeof(int)) ;
+        for(int i =0 ; i< taille ; i ++)
+        {
+            write(data->openRes, &(tab[i]), sizeof(float)) ;
 
-    free(tab) ;
+        }
+
+
+        free(tab) ;
     }
-    
+
     // - envoi de l'ordre au master (cf. CM_ORDER_* dans client_master.h)
     // - envoi des paramètres supplémentaires au master (pour CM_ORDER_EXIST,
     //   CM_ORDER_INSERT et CM_ORDER_INSERT_MANY)
@@ -433,72 +435,72 @@ void receiveAnswer(const Data *data)
     int read_res ;
     int accuse ;
 
- 	read_res = read(data->openRes , &accuse , sizeof(int) );
-	myassert(read_res != -1 , " ") ;
-	printf("j'ai bien recu l'accuse : %d \n" , accuse) ;
-	if(data->order == MW_ORDER_MAXIMUM)
-	{
-	float rep ;
-	read_res = read(data->openRes , &rep , sizeof(float) );
-			printf("j'ai bien recu la reponse le max est : %f \n" , rep) ;
-	myassert(read_res != -1 , " ") ;
-	}
-	if(data->order == MW_ORDER_MINIMUM)
-	{
-	float rep ;
-	read_res = read(data->openRes , &rep , sizeof(float) );
-			printf("j'ai bien recu la reponse le min est : %f \n" , rep) ;
-	myassert(read_res != -1 , " ") ;
-	}
-	
-	if(data->order == MW_ORDER_SUM)
-	{
-		float rep ;
-	read_res = read(data->openRes , &rep , sizeof(float) );
-			printf("j'ai bien recu la reponse la somme est : %f \n" , rep) ;
-	myassert(read_res != -1 , " ") ;
-	
-	}
-	
-	if(data->order ==CM_ORDER_HOW_MANY)
-	{
-		int nb_elements ;
-		int nb_all_elements ;
-			
-			read_res = read(data->openRes , &nb_elements , sizeof(float) );
-			myassert(read_res != 0 , " ") ;
-			read_res = read(data->openRes , &nb_all_elements , sizeof(float) );
-			myassert(read_res != 0 , " ") ;
-			printf("les nb d'elements differents : %d , nb total d'elements %d\n" , nb_all_elements, nb_elements) ;
-			
-	}
-	
-	
-	if(data->order ==CM_ORDER_EXIST)
-	{
-		if (accuse==CM_ANSWER_EXIST_NO)
-		{
-			printf("il n'existe pas \n") ;
-	
-		}
-		
-		else
-		{
-		int cardinality ;
-		read_res = read(data->openRes , &cardinality , sizeof(int) );
-			myassert(read_res != 0 , " ") ;
-			printf("il existe avec une cardinalite %d\n " , cardinality) ;
-		
-		}
-	
-	}	
-	
-	
+    read_res = read(data->openRes, &accuse, sizeof(int) );
+    myassert(read_res != -1, " ") ;
+    printf("j'ai bien recu l'accuse : %d \n", accuse) ;
+    if(data->order == MW_ORDER_MAXIMUM)
+    {
+        float rep ;
+        read_res = read(data->openRes, &rep, sizeof(float) );
+        printf("j'ai bien recu la reponse le max est : %f \n", rep) ;
+        myassert(read_res != -1, " ") ;
+    }
+    if(data->order == MW_ORDER_MINIMUM)
+    {
+        float rep ;
+        read_res = read(data->openRes, &rep, sizeof(float) );
+        printf("j'ai bien recu la reponse le min est : %f \n", rep) ;
+        myassert(read_res != -1, " ") ;
+    }
+
+    if(data->order == MW_ORDER_SUM)
+    {
+        float rep ;
+        read_res = read(data->openRes, &rep, sizeof(float) );
+        printf("j'ai bien recu la reponse la somme est : %f \n", rep) ;
+        myassert(read_res != -1, " ") ;
+
+    }
+
+    if(data->order ==CM_ORDER_HOW_MANY)
+    {
+        int nb_elements ;
+        int nb_all_elements ;
+
+        read_res = read(data->openRes, &nb_elements, sizeof(float) );
+        myassert(read_res != 0, " ") ;
+        read_res = read(data->openRes, &nb_all_elements, sizeof(float) );
+        myassert(read_res != 0, " ") ;
+        printf("les nb d'elements differents : %d , nb total d'elements %d\n", nb_all_elements, nb_elements) ;
+
+    }
 
 
-	
+    if(data->order ==CM_ORDER_EXIST)
+    {
+        if (accuse==CM_ANSWER_EXIST_NO)
+        {
+            printf("il n'existe pas \n") ;
 
-    
+        }
+
+        else
+        {
+            int cardinality ;
+            read_res = read(data->openRes, &cardinality, sizeof(int) );
+            myassert(read_res != 0, " ") ;
+            printf("il existe avec une cardinalite %d\n ", cardinality) ;
+
+        }
+
+    }
+
+
+
+
+
+
+
 
     //TODO
     // - récupération de l'accusé de réception du master (cf. CM_ANSWER_* dans client_master.h)
@@ -528,34 +530,34 @@ int main(int argc, char * argv[])
         //       . pour empêcher que 2 clients communiquent simultanément
         //       . le mutex est déjà créé par le master
         // - ouvrir les tubes nommés (ils sont déjà créés par le master)
-        int semId = my_semget(MUTEX ,PROJID);
-        int precedence =my_semget(MONFICHIER , PROJID2) ;
+        int semId = my_semget(MUTEX,PROJID);
+        int precedence =my_semget(MONFICHIER, PROJID2) ;
         entrerSC(semId) ;
         printf("je suis en SC \n") ;
-        int open_CTM = open(FD_CTOM , O_WRONLY) ;
-        myassert(open_CTM != -1 , " ") ;
+        int open_CTM = open(FD_CTOM, O_WRONLY) ;
+        myassert(open_CTM != -1, " ") ;
 
         data.openRes = open_CTM ;
-		if(data.order == CM_ORDER_INSERT || data.order==CM_ORDER_EXIST)
-		{
-        data.elt = strtof(argv[2], NULL);
+        if(data.order == CM_ORDER_INSERT || data.order==CM_ORDER_EXIST)
+        {
+            data.elt = strtof(argv[2], NULL);
         }
-        
+
         sendData(&data) ;
         int close_res =close(open_CTM);
-          myassert(open_CTM != -1 , " ") ;
+        myassert(open_CTM != -1, " ") ;
 
-        int open_MTC = open(FD_MTOC , O_RDONLY) ;
-        myassert(open_MTC != -1 ," ") ;
-		data.openRes = open_MTC ;
+        int open_MTC = open(FD_MTOC, O_RDONLY) ;
+        myassert(open_MTC != -1," ") ;
+        data.openRes = open_MTC ;
         receiveAnswer(&data) ;
         close_res = close(open_MTC) ;
-        myassert(close_res != -1 , " ") ;
+        myassert(close_res != -1, " ") ;
 
-      
-                printf("fin client\n") ;
-                
-                   sortirSC(semId) ;
+
+        printf("fin client\n") ;
+
+        sortirSC(semId) ;
         sortirSC(precedence) ;
         //       . les ouvertures sont bloquantes, il faut s'assurer que
         //         le master ouvre les tubes dans le même ordre
@@ -567,8 +569,8 @@ int main(int argc, char * argv[])
         // - libérer les ressources (fermeture des tubes, ...)
         // - débloquer le master grâce à un second sémaphore (cf. ci-dessous)
         //
-        
-        
+
+
         // Une fois que le master a envoyé la réponse au client, il se bloque
         // sur un sémaphore ; le dernier point permet donc au master de continuer
         //
@@ -578,3 +580,4 @@ int main(int argc, char * argv[])
 
     return EXIT_SUCCESS;
 }
+
