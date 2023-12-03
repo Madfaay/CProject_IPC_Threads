@@ -143,28 +143,33 @@ static void howManyAction(Data *data)
     int nb_all_elements = 0 ;
     if(data->fd == true)
     {
-
+        int nb_elements_d ;
+        int nb_all_elements_d ;
         write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
-        read_res = read(data->fdFilsD_To_Parent[0], &nb_elements, sizeof(int)) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &nb_elements_d, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
-        read_res = read(data->fdFilsD_To_Parent[0], &nb_all_elements, sizeof(int)) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &nb_all_elements_d, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
+        nb_elements+= nb_elements_d ;
+        nb_all_elements+= nb_all_elements_d ;
 
     }
 
 
     if(data->fg == true)
     {
-
+        int nb_elements_g ;
+        int nb_all_elements_g ;
         write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
 
-        read_res = read(data->fdFilsG_To_Parent[0], &nb_elements, sizeof(int)) ;
+        read_res = read(data->fdFilsG_To_Parent[0], &nb_elements_g, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
-        read_res = read(data->fdFilsG_To_Parent[0], &nb_all_elements, sizeof(int)) ;
+        read_res = read(data->fdFilsG_To_Parent[0], &nb_all_elements_g, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
-
+        nb_elements+= nb_elements_g ;
+        nb_all_elements+= nb_all_elements_g ;
     }
 
     nb_elements ++ ;
