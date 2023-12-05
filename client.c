@@ -474,9 +474,9 @@ void receiveAnswer(const Data *data)
         int nb_elements ;
         int nb_all_elements ;
 
-        read_res = read(data->openRes, &nb_elements, sizeof(float) );
+        read_res = read(data->openRes, &nb_elements, sizeof(int) );
         myassert(read_res != 0, " ") ;
-        read_res = read(data->openRes, &nb_all_elements, sizeof(float) );
+        read_res = read(data->openRes, &nb_all_elements, sizeof(int) );
         myassert(read_res != 0, " ") ;
         printf("les nb d'elements differents : %d , nb total d'elements %d\n", nb_all_elements, nb_elements) ;
 
