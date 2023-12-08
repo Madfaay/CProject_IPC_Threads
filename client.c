@@ -245,120 +245,74 @@ typedef struct
 // A vous de voir les paramètres nécessaires  (aucune variable globale autorisée)
 //END TODO
 
-void * thread_function(void * arg)
+
+void *thread_function(void *arg)
 {
+    thData *thdata = (thData *)arg;
 
-    thData * thdata = (thData*) arg ;
-    int indice = thdata->indice ;
-
-    for(int i = indice; i < indice + thdata->size ; i++)
+    for (int i = thdata->indice; i < thdata->indice + thdata->size; i++)
     {
-
         if (thdata->elt == thdata->tab[i])
         {
-
-
-            pthread_mutex_lock(thdata->mutex) ;
-            *(thdata->res)+= 1 ;
-
-            pthread_mutex_unlock(thdata->mutex) ;
-
+            pthread_mutex_lock(thdata->mutex);
+            *(thdata->res) += 1;
+            pthread_mutex_unlock(thdata->mutex);
         }
-
     }
 
-
-    return NULL ;
-
-
-
+    return NULL;
 }
 
 void lauchThreads(const Data *data)
 {
-    //TODO déclarations nécessaires : mutex, ...
     int result = 0;
-    pthread_mutex_t mutex ;
+    pthread_mutex_t mutex;
     pthread_mutex_init(&mutex, NULL);
 
-    float * tab = ut_generateTab(data->nb, data->min, data->max, 0);
+    float *tab = ut_generateTab(data->nb, data->min, data->max, 0);
 
-    //TODO lancement des threads
-    pthread_t th[data->nbThreads] ;
+    pthread_t th[data->nbThreads];
+    int range = data->nb / data->nbThreads;
+    int rest_range = data->nb % data->nbThreads;
+    thData *d = (thData *)malloc(sizeof(thData) * data->nbThreads);
 
-    int range = data->nb / data->nbThreads ;
-    int rest_range = data->nb % data->nbThreads ;
-    int avance = 0 ;
-    int indice ;
-    int premierindice = 0 ;
-    thData ** d = (thData**)malloc(sizeof(thData*)*data->nbThreads) ;
-    for(int i =0 ; i <data->nbThreads  ; i++)
+    int avance = 0;
+    int premierindice = 0;
+
+    for (int i = 0; i < data->nbThreads; i++)
     {
+        d[i].elt = data->elt;
+        d[i].res = &result;
+        d[i].mutex = &mutex;
 
-        d[i] = (thData*)malloc(sizeof(thData)) ;
-        d[i]->elt = data->elt ;
-        d[i]->size = range;
-        d[i]->res = &result ;
-        d[i]->mutex = &mutex ;
-        if(rest_range > 0 )
+        int indice, taille;
+        if (rest_range > 0)
         {
-            if(premierindice==0)
-            {
-                indice = (range * i) + avance  ;
-                premierindice ++ ;
-            }
-            else
-            {
-                indice = (range * i) + avance  ;
-                d[i]->indice = indice ;
-                d[i]->tab = tab ;
-                rest_range -- ;
-                avance ++ ;
-            }
+            indice = (range * i) + avance;
+            taille = range + 1;
+            rest_range--;
+            avance++;
         }
         else
         {
-            indice = (range * i) + avance  ;
-            d[i]->tab = tab ;
-            d[i]->indice = indice ;
-
+            indice = (range * i) + avance;
+            taille = range;
         }
-        //printf("l'indice qu'on a utiliser %d \n" , indice) ;
-        pthread_create(&(th[i]), NULL, &thread_function, d[i]) ;
-        //printf("l'indice avant d'envoyer %d , et le size %d\n" , d[i]->indice , d[i]->size) ;
 
+        d[i].indice = indice;
+        d[i].size = taille;
+        d[i].tab = tab;
 
-
-
+        pthread_create(&th[i], NULL, &thread_function, &d[i]);
     }
 
-
-    for(int i =0 ; i < data->nbThreads ; i++)
+    for (int i = 0; i < data->nbThreads; i++)
     {
-        pthread_join(th[i],NULL)  ;
-
-
+        int join_res = pthread_join(th[i], NULL);
+        myassert(join_res != -1, "Erreur lors de la jointure du thread");
     }
-    
 
-    
-    for(int i =0 ; i < data->nbThreads ; i ++)
-    {
-
-            free(d[i]) ;
-
-
-
-    }
-    
-            free(d) ;
-
-
-
-    //TODO attente de la fin des threads
-
-    // résultat (result a été rempli par les threads)
-    // affichage du tableau si pas trop gros
+    // Affichage du tableau si pas trop gros
     if (data->nb <= 20)
     {
         printf("[");
@@ -370,25 +324,25 @@ void lauchThreads(const Data *data)
         }
         printf("]\n");
     }
-    // recherche linéaire pour vérifier
+
+    // Recherche linéaire pour vérifier
     int nbVerif = 0;
     for (int i = 0; i < data->nb; i++)
     {
         if (tab[i] == data->elt)
-            nbVerif ++;
+            nbVerif++;
     }
+
     printf("Elément %g présent %d fois (%d attendu)\n", data->elt, result, nbVerif);
     if (result == nbVerif)
         printf("=> ok ! le résultat calculé par les threads est correct\n");
     else
         printf("=> PB ! le résultat calculé par les threads est incorrect\n");
 
-    //TODO libération des ressources
     pthread_mutex_destroy(&mutex);
-    free(tab) ;
-
+    free(tab);
+    free(d);
 }
-
 
 /************************************************************************
  * Partie communication avec le master
