@@ -29,7 +29,8 @@
  * Données persistantes d'un master
  ************************************************************************/
 
-static int compteur = 0 ;
+static int compteur = 0 ; //C'est un compteur si = 0 cela veut dire pas de worker , sinon premier worker exist .
+
 typedef struct
 {
 
@@ -138,7 +139,9 @@ void orderHowMany(Data *data)
         int order = CM_ORDER_HOW_MANY;
         write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
         myassert(write_res != -1," ") ;
-        int read_res = read(data->fds_To_Master[0], &nb_diff_elts, sizeof(int)) ;
+        int read_res = read(data->fds_To_Master[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1," ") ;
+        read_res = read(data->fds_To_Master[0], &nb_diff_elts, sizeof(int)) ;
         myassert(read_res != -1," ") ;
         read_res = read(data->fds_To_Master[0], &nb_all_elements, sizeof(int)) ;
         myassert(read_res != -1," ") ;
@@ -170,14 +173,14 @@ void orderMinimum(Data *data)
 {
     TRACE0("[master] ordre minimum\n");
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    int reponse ;
     int write_res ;
     int fd = data->openRes ;
+    int accuse ;
     if(compteur==0)
     {
 
-        reponse = CM_ANSWER_MINIMUM_EMPTY  ;
-        write_res = write(fd, &reponse, sizeof(int) );
+        accuse = CM_ANSWER_MINIMUM_EMPTY  ;
+        write_res = write(fd, &accuse, sizeof(int) );
         myassert(write_res != -1, " ") ;
 
 
@@ -191,7 +194,6 @@ void orderMinimum(Data *data)
         int order = data->order;
         write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
         myassert(write_res != -1," ") ;
-        int accuse ;
         int read_res = read(data->fdWorker_To_Master[0], &accuse, sizeof(int)) ;
         myassert(read_res != -1," ") ;
         float rep ;
@@ -223,7 +225,7 @@ void orderMinimum(Data *data)
  ************************************************************************/
 void orderMaximum(Data *data)
 {
-    int reponse;
+    int accuse;
     int write_res ;
     int fd = data->openRes ;
 
@@ -233,8 +235,8 @@ void orderMaximum(Data *data)
     {
 
 
-        reponse = CM_ANSWER_MAXIMUM_EMPTY  ;
-        write_res = write(fd, &reponse, sizeof(int) );
+        accuse = CM_ANSWER_MAXIMUM_EMPTY  ;
+        write_res = write(fd, &accuse, sizeof(int) );
         myassert(write_res != -1, " ") ;
 
 
@@ -243,8 +245,8 @@ void orderMaximum(Data *data)
     else
 
     {
-        reponse = CM_ANSWER_MAXIMUM_OK  ;
-        write_res = write(fd, &reponse, sizeof(int) );
+        accuse = CM_ANSWER_MAXIMUM_OK  ;
+        write_res = write(fd, &accuse, sizeof(int) );
         myassert(write_res != -1, " ") ;
         int order = CM_ORDER_MAXIMUM ;
         write_res = write(data->fds_To_Worker[1], &order, sizeof(int)) ;
@@ -252,7 +254,6 @@ void orderMaximum(Data *data)
         float rep ;
         int read_res = read(data->fdWorker_To_Master[0], &rep, sizeof(float)) ;
         myassert(read_res != -1," ") ;
-        printf("je print le reponse de max a master %f \n", rep) ;
         write_res = write(fd, &rep, sizeof(float) );
         myassert(write_res != -1, " ") ;
 
@@ -290,7 +291,7 @@ void orderExist(Data *data)
         myassert(write_res != -1," ") ;
         int read_res = read(data->fdWorker_To_Master[0], &accuse, sizeof(int)) ;
         myassert(read_res != -1," ") ;
-        printf("j'ai recu l'accuse de worker %d \n", accuse) ;
+
 
         if(accuse == MW_ANSWER_EXIST_YES)
         {
@@ -351,15 +352,16 @@ void orderSum(Data *data)
     else
     {
         int order = CM_ORDER_SUM;
-        int accuse = CM_ANSWER_SUM_OK ;
-        write_res = write(fd, &accuse, sizeof(int)) ;
+        int accuse ;
         write_res= write(data->fds_To_Worker[1], &order, sizeof(int)) ;
+        myassert(write_res != -1, " ") ;
+        int read_res = read(data->fds_To_Master[0], &accuse, sizeof(int)) ;
         myassert(write_res != -1," ") ;
         float rep ;
-        printf("d'ici sa vient je pense avant le read \n") ;
-        int read_res = read(data->fds_To_Master[0], &rep, sizeof(float)) ;
+        read_res = read(data->fds_To_Master[0], &rep, sizeof(float)) ;
         myassert(read_res != -1," ") ;
-        printf("je print le reponse de sum a master %f \n", rep) ;
+        write_res = write(fd, &accuse, sizeof(int)) ;
+        myassert(write_res != -1, " ") ;
         write_res = write(fd, &rep, sizeof(float) );
         myassert(write_res != -1, " ") ;
 
@@ -439,6 +441,7 @@ void orderInsertLocal(Data * data)
 
 
         }
+        
        
      }
 
@@ -583,7 +586,7 @@ void loop(Data *data)
     while (! end)
     {
         //TODO ouverture des tubes avec le client (cf. explications dans client.c)
-        printf("on est dans la boucle\n") ;
+
 
         init(data) ;
 

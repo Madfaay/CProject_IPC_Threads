@@ -52,7 +52,7 @@ typedef struct
     // communication avec le master
     //TODO
     int openRes ; // On conserve le fd utile pour la communication .
-    int accuse ;
+    int accuse ; // pour recevoir l'accuse
 
     // infos pour le travail à faire (récupérées sur la ligne de commande)
     int order;     // ordre de l'utilisateur (cf. CM_ORDER_* dans client_master.h)

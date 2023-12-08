@@ -97,19 +97,20 @@ void stopAction(Data *data)
 {
     TRACE3("    [worker (%d, %d) {%g}] : ordre stop\n", getpid(), getppid(),  data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
-    int write_res ;
+    
     //TODO
     if(data->fd ==true)
     {
-        write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
+
+        int write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
         wait(NULL) ;
 
     }
 
     if(data->fg ==true)
-    {
-        write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
+    {   
+       int write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
         wait(NULL) ;
     }
@@ -131,18 +132,21 @@ void stopAction(Data *data)
  ************************************************************************/
 static void howManyAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre how many\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre how many\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int write_res ;
     int read_res ;
     int nb_elements = 0;
     int nb_all_elements = 0 ;
+    int accuse ;
     if(data->fd == true)
     {
         int nb_elements_d ;
         int nb_all_elements_d ;
         write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
+        read_res = read(data->fdFilsD_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsD_To_Parent[0], &nb_elements_d, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsD_To_Parent[0], &nb_all_elements_d, sizeof(int)) ;
@@ -159,7 +163,9 @@ static void howManyAction(Data *data)
         int nb_all_elements_g ;
         write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
-
+        
+        read_res = read(data->fdFilsG_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsG_To_Parent[0], &nb_elements_g, sizeof(int)) ;
         myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsG_To_Parent[0], &nb_all_elements_g, sizeof(int)) ;
@@ -170,11 +176,13 @@ static void howManyAction(Data *data)
 
     nb_elements ++ ;
     nb_all_elements+= data->cardinality ;
-    printf("le nb d'elements (%d , %d) \n ", nb_elements, nb_all_elements) ;
-
+    accuse =MW_ANSWER_HOW_MANY ;
+    write_res = write(data->fdOut, &accuse, sizeof(int)) ;
+    myassert(write_res != -1, "" ) ;
     write_res = write(data->fdOut, &nb_elements, sizeof(int)) ;
+    myassert(write_res != -1, "" ) ;
     write_res = write(data->fdOut, &nb_all_elements, sizeof(int)) ;
-
+    myassert(write_res != -1, "" ) ;
 
 
 
@@ -195,7 +203,7 @@ static void howManyAction(Data *data)
  ************************************************************************/
 static void minimumAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre minimum\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre minimum\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int write_res ;
     if(data->fg==false)
@@ -264,11 +272,9 @@ static void existAction(Data *data)
     float elt ;
 
     int read_res = read(data->fdIn, &elt, sizeof(float)) ;
-    printf("j'ai sa comme element a chercher %f\n", elt);
     myassert(read_res != -1, " ") ;
     if(elt == data->elt)
     {
-        printf("je passe par le premier if ou pas \n") ;
         int accuse = MW_ANSWER_EXIST_YES ;
         int write_res = write(data->fdToMaster, &accuse, sizeof(int));
         myassert(write_res != -1, " ") ;
@@ -352,15 +358,17 @@ static void sumAction(Data *data)
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int write_res ;
     int read_res ;
+    int accuse ;
     if(data->fd == true)
     {
 
         write_res = write(data->fdsD[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
         float resd ;
+        read_res = read(data->fdFilsD_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsD_To_Parent[0], &(resd), sizeof(float)) ;
         myassert(read_res != -1, "" ) ;
-        printf("la reponse de mon fils d %f \n",resd) ;
         data->sumRes+=resd;
 
     }
@@ -370,16 +378,19 @@ static void sumAction(Data *data)
         write_res = write(data->fdsG[1], &(data->order), sizeof(int)) ;
         myassert(write_res != -1, "" ) ;
         float resg ;
+        read_res = read(data->fdFilsG_To_Parent[0], &accuse, sizeof(int)) ;
+        myassert(read_res != -1, "" ) ;
         read_res = read(data->fdFilsG_To_Parent[0], &(resg), sizeof(float)) ;
         myassert(read_res != -1, "" ) ;
-        printf("la reponse de mon fils g %f \n",resg) ;
         data->sumRes+=resg;
 
     }
 
-
+    
     data->sumRes+=(data->elt)*data->cardinality;
-    printf("j'ai envoyey cette sum %f \n",data->sumRes) ;
+    accuse = MW_ANSWER_SUM   ;
+    write_res = write(data->fdOut, &accuse, sizeof(int)) ;
+    myassert(write_res != -1, "" ) ;
     write_res = write(data->fdOut, &(data->sumRes), sizeof(float)) ;
     myassert(write_res != -1, "" ) ;
 
@@ -403,7 +414,7 @@ static void sumAction(Data *data)
  ************************************************************************/
 static void insertAction(Data *data)
 {
-    //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt /*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
 
     //TODO
@@ -448,10 +459,9 @@ static void insertAction(Data *data)
 
 
                 }
-
-
-
-            }
+                
+                
+         }   
 
 
             else
@@ -465,8 +475,8 @@ static void insertAction(Data *data)
 
             }
 
-
-        }
+}
+        
         else if(elt <= data->elt)
         {
 
@@ -495,7 +505,7 @@ static void insertAction(Data *data)
 
 
                 }
-
+                
 
 
 
@@ -545,7 +555,7 @@ static void insertAction(Data *data)
  ************************************************************************/
 static void printAction(Data *data)
 {
-    TRACE3("    [worker (%d, %d) {%g}] : ordre print\n", getpid(), getppid(), 3.14 /*TODO élément*/);
+    TRACE3("    [worker (%d, %d) {%g}] : ordre print\n", getpid(), getppid(), data->elt/*TODO élément*/);
     myassert(data != NULL, "il faut l'environnement d'exécution");
     int accuse ;
     int write_res;
@@ -563,7 +573,6 @@ static void printAction(Data *data)
     }
 
     printf("j'ai l'element %f , de cardinalite %d\n ", data->elt, data->cardinality) ;
-
 
 
     if(data->fd == true)
@@ -611,7 +620,6 @@ void loop(Data *data)
         int read_res = read(data->fdIn, &order, sizeof(int)) ;
         myassert(read_res != -1, " ") ;
         data->order = order ;
-        printf("je suis worker et voila l'ordre %d \n", order ) ;
 
         switch(order)
         {
@@ -698,4 +706,6 @@ int main(int argc, char * argv[])
     TRACE3("    [worker (actuelpid : %d, perepid :%d) {%f}] : fin worker\n", getpid(), getppid(), data.elt /*TODO élément*/);
     return EXIT_SUCCESS;
 }
+
+                
 
