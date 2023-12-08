@@ -75,10 +75,6 @@ static void parseArgs(int argc, char * argv[], Data *data)
     int fdIn = strtol(argv[2], NULL, 10);
     int fdOut = strtol(argv[3], NULL, 10);
     int fdToMaster = strtol(argv[4], NULL, 10);
-    // printf("%g %d %d %d dans le compteur\n", elt, fdIn, fdOut, fdToMaster);
-    //int reponse = 1000 ;
-    //int write_res = write(fdToMaster , &reponse , sizeof(int)) ;
-    // myassert(write_res !=-1 , "") ;
     data->elt = elt ;
     data->fdIn = fdIn ;
     data->fdOut = fdOut ;
@@ -445,7 +441,6 @@ static void insertAction(Data *data)
                     sprintf(fdWorker, "%d", data->fdToMaster);
 
 
-                    // printf("%s + %s + %s + %s on est a worker pour creer un fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
                     char * argv[] = {"./worker", stringElement, stringfds1, stringfds2, fdWorker,  NULL } ;
                     char *path = "./worker" ;
                     //TRACE3("    [worker (%d, %d) {%g}] : ordre insert\n", getpid(), getppid(), data->elt) ;
@@ -462,7 +457,7 @@ static void insertAction(Data *data)
             else
 
             {
-                // printf("%s + %s + %s + %s on est a worker pour creer pour donner fils droit mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+                
                 int order = data->order ;
                 write(data->fdsD[1], &order, sizeof(int)) ;
                 write(data->fdsD[1], &elt, sizeof(int)) ;
@@ -491,7 +486,7 @@ static void insertAction(Data *data)
                     sprintf(fdWorker, "%d", data->fdToMaster);
 
 
-                    // printf("%s + %s + %s + %s on est a worker pour creer un fils gauche mon id : %d mon pere : %d. string ......... \n" , stringElement , stringfds1 , stringfds2 , fdWorker , getpid() , getppid()) ;
+                    
                     char * argv[] = {"./worker", stringElement, stringfds1, stringfds2, fdWorker,  NULL } ;
                     char *path = "./worker" ;
 

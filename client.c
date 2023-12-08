@@ -51,7 +51,7 @@ typedef struct
 {
     // communication avec le master
     //TODO
-    int openRes ;
+    int openRes ; // On conserve le fd utile pour la communication .
     int accuse ;
 
     // infos pour le travail à faire (récupérées sur la ligne de commande)
@@ -250,22 +250,23 @@ void * thread_function(void * arg)
 
     thData * thdata = (thData*) arg ;
     int indice = thdata->indice ;
-    //printf("mon premier indice le size si j'ai bien recu a la fonction indice %d et le size : %d \n" , indice , thdata->size) ;
+
     for(int i = indice; i < indice + thdata->size ; i++)
     {
-        //printf("voici la valeur de tableau que je suis entrain de traite %f et l'indice i : %d \n" , thdata->tab[i] , i) ;
+
         if (thdata->elt == thdata->tab[i])
         {
 
 
             pthread_mutex_lock(thdata->mutex) ;
-
             *(thdata->res)+= 1 ;
+
             pthread_mutex_unlock(thdata->mutex) ;
 
         }
 
     }
+
 
     return NULL ;
 
@@ -331,6 +332,7 @@ void lauchThreads(const Data *data)
 
     }
 
+
     for(int i =0 ; i < data->nbThreads ; i++)
     {
         pthread_join(th[i],NULL)  ;
@@ -338,13 +340,18 @@ void lauchThreads(const Data *data)
 
     }
     
+
+    
     for(int i =0 ; i < data->nbThreads ; i ++)
     {
 
             free(d[i]) ;
-            free(d) ;
+
+
 
     }
+    
+            free(d) ;
 
 
 
